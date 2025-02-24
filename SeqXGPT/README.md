@@ -1,6 +1,6 @@
 # Deep Learning Model -- SeqXGPT
 
-Our model based on SeqXGPT, please refer to the [SeqXGPT homepage](https://github.com/Jihuai-wpy/SeqXGPT/tree/main).
+Our model based on SeqXGPT, please refer to the [SeqXGPT](https://github.com/Jihuai-wpy/SeqXGPT/tree/main).
 
 ## Datasets
 
@@ -142,5 +142,8 @@ We implement sentence-level AIGT detection with RoBERTa based on the sequence la
 
 A complete description of the environment settings is available in `requirements.txt`, including version information for all dependency libraries, to ensure that other researchers can replicate our experimental environment precisely.
 
+## License
+
+This repository is released under the Apache License 2.0, following the same licensing as the original SeqXGPT project.
 
 
