@@ -111,13 +111,19 @@ Before training and testing, please refer to the [Feature Extraction](#feature-e
 ```bash
 # split train / test dataset and then train. You can adjust the train/test ratio using '--train_ratio'.
 python SeqXGPT/train.py --split_dataset --data_path dataset/SeqXGPT_output --train_path dataset/SeqXGPT_output/en_gpt2_tr.jsonl --test_path dataset/SeqXGPT_output/en_gpt2_te.jsonl --gpu=0
+```
 
+```bash
 # train
 python SeqXGPT/train.py --gpu=0
+```
 
+```bash
 # test
 python SeqXGPT/train.py --gpu=0 --do_test
+```
 
+```bash
 # test document-level AIGT detection
 python SeqXGPT/train.py --gpu=0 --do_test --test_content
 ```

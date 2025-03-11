@@ -19,7 +19,7 @@ warnings.filterwarnings('ignore')
 # project_path = os.path.abspath('')
 # if project_path not in sys.path:
 #     sys.path.append(project_path)
-sys.path.append("/mnt/xinfeng/research/AI_Human_Detection/Test_Ruoxin_Wang/SeqXGPT/SeqXGPT/")
+sys.path.append("/Users/ruoxinwang/Desktop/Duke/Deep_Learning_and_Applications/Natural_Language_Processing/AI-Text-Detector/SeqXGPT")
 import backend_model_info
 from dataloader import DataManager
 from model import ModelWiseCNNClassifier, ModelWiseTransformerClassifier, TransformerOnlyClassifier
@@ -53,7 +53,6 @@ class SupervisedTrainer:
         self.warm_up_ratio = args.warm_up_ratio
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        # self.device = torch.device('cpu')
         self.model.to(self.device)
         self._create_optimizer_and_scheduler()
 
@@ -185,8 +184,6 @@ class SupervisedTrainer:
             # Disable gradient calculation.
             with torch.no_grad():
                 output = self.model(inputs['features'], inputs['labels'])
-                # print("Processed labels:", output['proc_labels'][0][:10])
-                # print("Predictions:", output['preds'][0][:10])
                 logits = output['logits']
                 proc_labels = output.get('proc_labels', inputs['labels'])
                 
@@ -194,21 +191,13 @@ class SupervisedTrainer:
                 pred_labels.extend(output['preds'].cpu().tolist())
                 true_labels.extend(proc_labels.cpu().tolist())
                 total_logits.extend(logits.cpu().tolist())
-        
-        ######################
-        # Count unique predictions
-        true_counts = Counter([label for seq in true_labels for label in seq if label != -1])
-        pred_counts = Counter([label for seq in pred_labels for label in seq if label != -1])
 
-        print("\n🔍 **True Labels Distribution**:", true_counts)
-        print("🔍 **Predicted Labels Distribution**:", pred_counts)
-        ######################
+        # # Count unique predictions
+        # true_counts = Counter([label for seq in true_labels for label in seq if label != -1])
+        # pred_counts = Counter([label for seq in pred_labels for label in seq if label != -1])
 
-        # with open("", 'w') as f:
-        #     f.write(json.dumps(total_logits[3], ensure_ascii=False) + '\n')
-        #     f.write(json.dumps(texts[3], ensure_ascii=False) + '\n')
-        #     f.write(json.dumps(true_labels[3], ensure_ascii=False) + '\n')
-        #     f.write(json.dumps(pred_labels[3], ensure_ascii=False) + '\n')
+        # print("\n **True Labels Distribution**:", true_counts)
+        # print("**Predicted Labels Distribution**:", pred_counts)
 
         # Convert to numpy arrays
         true_labels = np.array(true_labels)
@@ -217,11 +206,11 @@ class SupervisedTrainer:
         # Evaluate at different levels.
         if content_level_eval:
             # content level evaluation
-            print("*" * 8, "Content Level Evalation", "*" * 8)
+            print("*" * 8, "Content Level Evaluation", "*" * 8)
             content_result = self.content_level_eval(texts, true_labels, pred_labels)
         else:
             # sent level evalation
-            print("*" * 8, "Sentence Level Evalation", "*" * 8)
+            print("*" * 8, "Sentence Level Evaluation", "*" * 8)
             sent_result = self.sent_level_eval(texts, true_labels, pred_labels)
 
         # Word-level evaluation with improved handling
@@ -385,101 +374,98 @@ def construct_bmes_labels(labels):
     
     return id2label
 
-# def split_dataset(data_path, train_path, test_path, train_ratio=0.9):
-#     file_names = [file_name for file_name in os.listdir(data_path) if file_name.endswith('.jsonl')]
-#     print('*'*32)
-#     print('The overall data sources:')
-#     print(file_names)
-#     file_paths = [os.path.join(data_path, file_name) for file_name in file_names]
-
-#     total_samples = []
-#     for file_path in file_paths:
-#         with open(file_path, 'r') as f:
-#             samples = [json.loads(line) for line in f]
-#             total_samples.extend(samples)
-    
-#     import random
-#     random.seed(0)
-#     random.shuffle(total_samples)
-
-#     split_index = int(len(total_samples) * train_ratio)
-#     train_data = total_samples[:split_index]
-#     test_data = total_samples[split_index:]
-
-#     def save_dataset(fpath, data_samples):
-#         with open(fpath, 'w', encoding='utf-8') as f:
-#             for sample in tqdm(data_samples):
-#                 f.write(json.dumps(sample, ensure_ascii=False) + '\n')
-#     save_dataset(train_path, train_data)
-#     save_dataset(test_path, test_data)
-#     print()
-#     print("The number of train dataset:", len(train_data))
-#     print("The number of test  dataset:", len(test_data))
-#     print('*'*32)
-#     pass
-
-def split_dataset(data_path, train_path, test_path, train_ratio=0.9, seed=42):
-    """
-    Splits the dataset into training and test sets ensuring no overlap.
-    
-    :param data_path: Path to the directory containing dataset files.
-    :param train_path: Path to save the training dataset.
-    :param test_path: Path to save the test dataset.
-    :param train_ratio: Fraction of data to use for training (default: 0.9).
-    :param seed: Random seed for reproducibility.
-    """
-    random.seed(seed)
-    
-    # Collect all JSONL files in the data directory
-    file_names = [file for file in os.listdir(data_path) if file.endswith('.jsonl')]
-    print('*' * 32)
-    print('The overall data sources:', file_names)
+def split_dataset(data_path, train_path, test_path, train_ratio=0.9):
+    file_names = [file_name for file_name in os.listdir(data_path) if file_name.endswith('.jsonl')]
+    print('*'*32)
+    print('The overall data sources:')
+    print(file_names)
+    file_paths = [os.path.join(data_path, file_name) for file_name in file_names]
 
     total_samples = []
-
-    # Load data from each JSONL file
-    for file_name in file_names:
-        file_path = os.path.join(data_path, file_name)
-        with open(file_path, 'r', encoding='utf-8') as f:
+    for file_path in file_paths:
+        with open(file_path, 'r') as f:
             samples = [json.loads(line) for line in f]
             total_samples.extend(samples)
     
-    # Shuffle the dataset
+    import random
+    random.seed(0)
     random.shuffle(total_samples)
 
-    # Get unique texts to prevent duplication
-    text_to_sample = {sample['text']: sample for sample in total_samples}
-    unique_samples = list(text_to_sample.values())
-
-    # Perform the train/test split
-    split_index = int(len(unique_samples) * train_ratio)
-    train_data = unique_samples[:split_index]
-    test_data = unique_samples[split_index:]
+    split_index = int(len(total_samples) * train_ratio)
+    train_data = total_samples[:split_index]
+    test_data = total_samples[split_index:]
 
     def save_dataset(fpath, data_samples):
-        """Helper function to save datasets in JSONL format."""
         with open(fpath, 'w', encoding='utf-8') as f:
-            for sample in tqdm(data_samples, desc=f"Saving {Path(fpath).stem}"):
+            for sample in tqdm(data_samples):
                 f.write(json.dumps(sample, ensure_ascii=False) + '\n')
-
-    # Save datasets
     save_dataset(train_path, train_data)
     save_dataset(test_path, test_data)
+    print()
+    print("The number of train dataset:", len(train_data))
+    print("The number of test  dataset:", len(test_data))
+    print('*'*32)
+    pass
 
-    print("\n✅ Dataset split completed!")
-    print(f"🚀 Train samples: {len(train_data)}")
-    print(f"🚀 Test samples: {len(test_data)}")
+# def split_dataset(data_path, train_path, test_path, train_ratio=0.9, seed=42):
+#     """
+#     Splits the dataset into training and test sets ensuring no overlap.
+    
+#     :param data_path: Path to the directory containing dataset files.
+#     :param train_path: Path to save the training dataset.
+#     :param test_path: Path to save the test dataset.
+#     :param train_ratio: Fraction of data to use for training (default: 0.9).
+#     :param seed: Random seed for reproducibility.
+#     """
+#     random.seed(seed)
+    
+#     # Collect all JSONL files in the data directory
+#     file_names = [file for file in os.listdir(data_path) if file.endswith('.jsonl')]
+#     print('*' * 32)
+#     print('The overall data sources:', file_names)
 
-    # Verify no overlap
-    train_texts = {sample['text'] for sample in train_data}
-    test_texts = {sample['text'] for sample in test_data}
-    overlap = train_texts.intersection(test_texts)
+#     total_samples = []
 
-    print(f"🔍 Overlap between train and test: {len(overlap)} samples (should be 0)")
-    assert len(overlap) == 0, "❌ Data leakage detected! Overlapping samples found in train and test sets."
-    print("✅ No data leakage! Train and test sets are properly split.")
+#     # Load data from each JSONL file
+#     for file_name in file_names:
+#         file_path = os.path.join(data_path, file_name)
+#         with open(file_path, 'r', encoding='utf-8') as f:
+#             samples = [json.loads(line) for line in f]
+#             total_samples.extend(samples)
+    
+#     # Shuffle the dataset
+#     random.shuffle(total_samples)
 
-    print('*' * 32)
+#     # Get unique texts to prevent duplication
+#     text_to_sample = {sample['text']: sample for sample in total_samples}
+#     unique_samples = list(text_to_sample.values())
+
+#     # Perform the train/test split
+#     split_index = int(len(unique_samples) * train_ratio)
+#     train_data = unique_samples[:split_index]
+#     test_data = unique_samples[split_index:]
+
+#     def save_dataset(fpath, data_samples):
+#         """Helper function to save datasets in JSONL format."""
+#         with open(fpath, 'w', encoding='utf-8') as f:
+#             for sample in tqdm(data_samples, desc=f"Saving {Path(fpath).stem}"):
+#                 f.write(json.dumps(sample, ensure_ascii=False) + '\n')
+
+#     # Save datasets
+#     save_dataset(train_path, train_data)
+#     save_dataset(test_path, test_data)
+
+#     # Verify no overlap
+#     train_texts = {sample['text'] for sample in train_data}
+#     test_texts = {sample['text'] for sample in test_data}
+#     overlap = train_texts.intersection(test_texts)
+
+#     print(f"🔍 Overlap between train and test: {len(overlap)} samples (should be 0)")
+#     assert len(overlap) == 0, "❌ Data leakage detected! Overlapping samples found in train and test sets."
+#     print("✅ No data leakage! Train and test sets are properly split.")
+
+#     print('*' * 32)
+
 
 import argparse
 def parse_args():
@@ -512,8 +498,6 @@ def parse_args():
     parser.add_argument('--test_content', action='store_true')
     return parser.parse_args()
 
-# python ./Seq_train/train.py --gpu=0 --split_dataset
-# python ./Seq_train/train.py --gpu=0
 if __name__ == "__main__":
     args = parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
@@ -532,10 +516,12 @@ if __name__ == "__main__":
     #     # 'gpt3sum': 3,
     #     'human': 5
     # }
-    # en_labels = {'AI':0, 'human':1}
+
     en_labels = {
         'gpt2': 0,
-        'human': 1,
+        'llama': 1,
+        'human': 2,
+        'gpt3re': 3,
     }
 
     id2label = construct_bmes_labels(en_labels)
@@ -555,19 +541,19 @@ if __name__ == "__main__":
         print('-' * 32 + 'classify' + '-' * 32)
         if args.model == 'SeqXGPT':
             classifier = SeqXGPTModel(embedding_size=512, seq_len=1024, num_layers=4, num_heads=2, id2labels=id2label)
-            classifier.to("cuda" if torch.cuda.is_available() else "cpu")
-            ckpt_name = 'seqxgpt_cls_model.pt'
+            # classifier.to("cuda" if torch.cuda.is_available() else "cpu")
+            ckpt_name = 'checkpoint/seqxgpt_cls_model.pt'
         elif args.model == 'CNN':
             print('-' * 32 + "CNN" + '-' * 32)
             classifier = ModelWiseCNNClassifier(id2labels=id2label)
-            ckpt_name = 'cnn_cls_model.pt'
+            ckpt_name = 'checkpoint/cnn_cls_model.pt'
         elif args.model == 'RNN':
             print('-' * 32 + "RNN" + '-' * 32)
             classifier = TransformerOnlyClassifier(id2labels=id2label, seq_len=args.seq_len)
-            ckpt_name = 'rnn_cls_model.pt'
+            ckpt_name = 'checkpoint/rnn_cls_model.pt'
         else:
             classifier = ModelWiseTransformerClassifier(id2labels=id2label, seq_len=args.seq_len)
-            ckpt_name = 'transformer_cls_model.pt'
+            ckpt_name = 'checkpoint/transformer_cls_model.pt'
 
         trainer = SupervisedTrainer(data, classifier, en_labels, id2label, args)
 
@@ -594,14 +580,14 @@ if __name__ == "__main__":
         print('-' * 32 + 'contrastive_learning' + '-' * 32)
         if args.model == 'CNN':
             classifier = ModelWiseCNNClassifier(class_num=backend_model_info.en_class_num)
-            ckpt_name = 'cnn_con_model.pt'
+            ckpt_name = 'checkpoint/cnn_con_model.pt'
         elif args.model == 'SeqXGPT':
             classifier = SeqXGPTModel(embedding_size=768, seq_len=1024, num_layers=6, id2labels=id2label)
-            classifier.to("cuda" if torch.cuda.is_available() else "cpu")
-            ckpt_name = 'seqxgpt_con_model.pt'
+            # classifier.to("cuda" if torch.cuda.is_available() else "cpu")
+            ckpt_name = 'checkpoint/seqxgpt_con_model.pt'
         else:
             classifier = ModelWiseTransformerClassifier(class_num=backend_model_info.en_class_num)
-            ckpt_name = 'transformer_con_model.pt'
+            ckpt_name = 'checkpoint/transformer_con_model.pt'
 
         trainer = SupervisedTrainer(data, classifier, loss_criterion = 'ContrastiveLoss')
         trainer.train(ckpt_name=ckpt_name)
@@ -611,18 +597,18 @@ if __name__ == "__main__":
         print('-' * 32 + 'contrastive_classify' + '-' * 32)
         if args.model == 'CNN':
             classifier = ModelWiseCNNClassifier(class_num=backend_model_info.en_class_num)
-            ckpt_name = 'cnn_cc_model.pt'
+            ckpt_name = 'checkpoint/cnn_cc_model.pt'
             saved_model = torch.load(ckpt_name, weights_only=True)
             classifier.load_state_dict(saved_model.state_dict())
         elif args.model == 'SeqXGPT':
             classifier = SeqXGPTModel(embedding_size=768, seq_len=1024, num_layers=6, id2labels=id2label)
-            classifier.to("cuda" if torch.cuda.is_available() else "cpu")
-            ckpt_name = 'seqxgpt_cc_model.pt'
+            # classifier.to("cuda" if torch.cuda.is_available() else "cpu")
+            ckpt_name = 'checkpoint/seqxgpt_cc_model.pt'
             saved_model = torch.load(ckpt_name, weights_only=True)
             classifier.load_state_dict(saved_model.state_dict())
         else:
             classifier = ModelWiseTransformerClassifier(class_num=backend_model_info.en_class_num)
-            ckpt_name = 'transformer_cc_model.pt'
+            ckpt_name = 'checkpoint/transformer_cc_model.pt'
             saved_model = torch.load(ckpt_name, weights_only=True)
             classifier.load_state_dict(saved_model.state_dict())
 
