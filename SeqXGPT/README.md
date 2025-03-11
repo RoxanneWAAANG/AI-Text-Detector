@@ -63,8 +63,6 @@ We upload raw data and data with extracted features on the [HuggingFace](https:/
 
 A dataset used to evaluate the performance of various methods in document-level AIGT detection.
 
-**data format:**
-
 ```python
 {
     "text": "in this paper we consider the possible existence of unstable axisymmetric modes in kerr space times , resulting from exponentially growing solutions of the teukolsky equation .  we describe a transformation that casts the radial equation that results upon separation of variables in the teukolsky equation , in the form of a schrdinger equation , and combine the properties of the solutions of this equations with some recent results on the asymptotic behaviour of spin weighted spheroidal harmonics to prove the existence of an infinite family of unstable modes .  thus we prove that the stationary region beyond a kerr black hole inner horizon is unstable under gravitational linear perturbations .  we also prove that kerr space - time with angular momentum larger than its square mass , which has a naked singularity , is unstable .", 
