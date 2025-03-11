@@ -59,8 +59,7 @@ We upload raw data and data with extracted features on the [HuggingFace](https:/
 | 2         | human  | 5997  |
 | 3         | gpt3re | 5994  |
 
-
-### Document-Level Detection Dataset
+#### Document-Level Detection Dataset
 
 A dataset used to evaluate the performance of various methods in document-level AIGT detection.
 
@@ -77,11 +76,12 @@ A dataset used to evaluate the performance of various methods in document-level 
 
 ​	**`label`** is the label for the document, and there are six types of labels in total: `gpt2`, `llama`, `gpt3re`, `human`.
 
-### OOD Sentence-Level Detection Dataset
+#### OOD Sentence-Level Detection Dataset
 
 A dataset used to evaluate the performance of various methods on OOD data.
 
 **data format** is the same as the data format of [SeqXGPT-Bench](#seqxgpt-bench).
+
 
 ## Inference Server
 
@@ -91,7 +91,7 @@ You can launch the inference server through `backend_api.py`. The startup comman
 
 ```bash
 # --model: [gpt2]
-python backend_api.py --port 6006 --timeout 30000 --debug --model=gpt2 --gpu=0
+python backend_api.py --port 20098 --timeout 30000 --debug --model=gpt2 --gpu=0
 ```
 
 ## Feature Extraction
@@ -99,19 +99,7 @@ python backend_api.py --port 6006 --timeout 30000 --debug --model=gpt2 --gpu=0
 After successfully starting the related inference server, you can extract **the original features of SeqXGPT** using `gen_features.py`:
 
 ```bash
-python ./dataset/gen_features.py --get_en_features --input_file input.jsonl --output_file output.jsonl
-```
-
-**It's worth noting that** you need to modify the inference server's URL in this file to the URL of the server you started.
-
-You can extract **the contrastive features for Sniffer** using:
-
-```bash
-python ./dataset/gen_features.py --get_en_features --input_file input.jsonl --output_file output_1.jsonl
-```
-
-```bash
-python ./dataset/gen_features.py --process_features --input_file output_1.jsonl --output_file output_2.jsonl
+python dataset/gen_features.py --get_en_features --input_file dataset/SeqXGPT_raw/en_gpt2_lines.jsonl --output_file dataset/SeqXGPT_output/en_gpt2_lines.jsonl
 ```
 
 ## Models
@@ -124,27 +112,27 @@ Before training and testing, please refer to the [Feature Extraction](#feature-e
 
 ```bash
 # split train / test dataset and then train. You can adjust the train/test ratio using '--train_ratio'.
-python ./Seq_train/train.py --gpu=0 --split_dataset
+python SeqXGPT/train.py --split_dataset --data_path dataset/SeqXGPT_output --train_path dataset/SeqXGPT_output/en_gpt2_tr.jsonl --test_path dataset/SeqXGPT_output/en_gpt2_te.jsonl --gpu=0
 
 # train
-python ./Seq_train/train.py --gpu=0
+python SeqXGPT/train.py --gpu=0
 
 # test
-python ./Seq_train/train.py --gpu=0 --do_test
+python SeqXGPT/train.py --gpu=0 --do_test
 
 # test document-level AIGT detection
-python ./Seq_train/train.py --gpu=0 --do_test --test_content
+python SeqXGPT/train.py --gpu=0 --do_test --test_content
 ```
 
 In our modified version of SeqXGPT, we introduce three extra operations on the document-level wave (i.e., the sequence of log probabilities) to further refine feature extraction and enhance generalization:
 
-I. Patch-based Averaging:
+#### I. Patch-based Averaging:
 We divide the wave into small patches and compute the average within each patch. This operation acts as a smoothing mechanism that reduces local noise and variability. By aggregating local statistics, each patch more reliably represents the dominant trend in that segment of the wave, thereby making the subsequent feature extraction more robust.
 
-II. 2D Convolution Processing:
+#### II. 2D Convolution Processing:
 Instead of relying solely on 1D convolution (or other sequential models), we apply 2D convolution on the wave. This approach allows the model to capture local patterns along two dimensions simultaneously—both across the temporal axis and across feature channels. The 2D convolution effectively extracts rich spatial correlations and inter-channel interactions, which enhances the model’s ability to discern subtle differences in the wave patterns.
 
-III. Patch Shuffling:
+#### III. Patch Shuffling:
 After dividing the wave into patches, we shuffle the order of these patches. Shuffling serves as a data augmentation strategy that encourages the model to learn features that are invariant to the exact ordering of local segments. By reducing dependency on sequential order, the model becomes less prone to overfitting and gains improved generalization performance when faced with varied or perturbed input sequences.
 
 
