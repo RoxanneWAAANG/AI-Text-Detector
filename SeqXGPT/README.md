@@ -94,10 +94,20 @@ python backend_api.py --port 20098 --timeout 30000 --debug --model=gpt2 --gpu=0
 
 ## Feature Extraction
 
+### Training Data
+
 After successfully starting the related inference server, you can extract **the original features of SeqXGPT** using `gen_features.py`:
 
 ```bash
 python dataset/gen_features.py --get_en_features --input_file dataset/SeqXGPT_raw/en_gpt2_lines.jsonl --output_file dataset/SeqXGPT_output/en_gpt2_lines.jsonl
+```
+
+### Testing Data
+
+As for test dataset which does not contain `label`, use below argument to extract features:
+
+```bash
+python dataset/gen_features.py --get_unlabeled_features --input_file dataset/SeqXGPT_output/inference.jsonl --output_file dataset/SeqXGPT_output/inference_output.jsonl
 ```
 
 ## Models

@@ -160,7 +160,7 @@ def get_features_unlabeled(input_file, output_file):
 
     # Define the API for GPT-2 model (update if needed)
     gpt_2_api = 'http://localhost:20098/inference'
-    model_api = gpt_2_api  # Using only GPT-2 for inference
+    model_api = gpt_2_api
 
     # Read input file containing text samples
     with open(input_file, 'r') as f:
