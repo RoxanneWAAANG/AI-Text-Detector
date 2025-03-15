@@ -56,13 +56,6 @@ class SupervisedTrainer:
         self.model.to(self.device)
         self._create_optimizer_and_scheduler()
 
-    def _check_data_balance(self):
-        all_labels = []
-        for batch in self.data.train_dataloader:
-            all_labels.extend(batch['labels'].cpu().numpy().flatten())
-        unique, counts = np.unique(all_labels, return_counts=True)
-        # print("Label distribution:", dict(zip(unique, counts)))
-
     def _create_optimizer_and_scheduler(self):
         num_training_steps = len(
             self.data.train_dataloader) * self.num_train_epochs
@@ -100,46 +93,55 @@ class SupervisedTrainer:
             num_warmup_steps=self.warm_up_ratio * num_training_steps,
             num_training_steps=num_training_steps)
 
-    def load_model(self, ckpt_name):
-        """Safe model loading with proper allowlisting"""
-        from torch.serialization import default_restore_location
+    def save_model(self, ckpt_name):
+        """Unified model saving method"""
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(ckpt_name), exist_ok=True)
         
-        # Allowlist custom classes
-        torch.serialization.add_safe_globals([SeqXGPTModel])
-        
-        # Load with weights_only=True
-        state_dict = torch.load(
-            ckpt_name,
-            map_location=lambda storage, loc: default_restore_location(storage, str(loc)),
-            weights_only=True
-        )
-        self.model.load_state_dict(state_dict)
-        self.model.to(self.device)
+        # Save state dict only (more efficient)
+        torch.save(self.model.state_dict(), ckpt_name)
+        print(f"Model saved to {ckpt_name}")
     
-    def train(self, ckpt_name='linear_en.pt'):
+    def load_model(self, ckpt_name):
+        """Unified model loading method"""
+        if not os.path.exists(ckpt_name):
+            print(f"Warning: Checkpoint {ckpt_name} not found")
+            return False
+            
+        try:
+            state_dict = torch.load(
+                ckpt_name,
+                map_location=self.device,
+                weights_only=True
+            )
+            self.model.load_state_dict(state_dict)
+            print(f"Model loaded from {ckpt_name}")
+            return True
+        except Exception as e:
+            print(f"Error loading model: {e}")
+            return False
+    
+    def train(self, ckpt_name='checkpoint/model.pt'):
+        best_loss = float('inf')
+
         for epoch in trange(int(self.num_train_epochs), desc="Epoch"):
             self.model.train()
             # Accumulate training loss.
             tr_loss = 0
             # Count training steps.
             nb_tr_steps = 0
-            # Verify data balance.
-            self._check_data_balance()
-            # train
-            for step, inputs in enumerate(
-                    tqdm(self.data.train_dataloader, desc="Iteration")):
-                for k, v in inputs.items():
-                    # Move tensors to the appropriate device.
-                    if isinstance(v, torch.Tensor):
-                        inputs[k] = v.to(self.device)
+
+            for step, inputs in enumerate(tqdm(self.data.train_dataloader, desc="Iteration")):
+                # Move inputs to device
+                inputs = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v 
+                    for k, v in inputs.items()}
                         
-                # Enable gradient calculation.
+                # Forward pass and loss calculation
                 with torch.set_grad_enabled(True):
-                    labels = inputs['labels']
                     output = self.model(inputs['features'], inputs['labels'])
-                    logits = output['logits']
                     loss = output['loss']
                     
+                    # Backward pass
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
@@ -148,26 +150,21 @@ class SupervisedTrainer:
                     tr_loss += loss.item()
                     nb_tr_steps += 1
 
-            # Compute and log the average training loss.
-            loss = tr_loss / nb_tr_steps
-            print(f'epoch {epoch+1}: train_loss {loss}')
-            # test
-            self.test()
-            print('*' * 120)
-            torch.save(self.model.cpu(), ckpt_name)
-            self.model.to(self.device)
-            #################
-            torch.save(self.model.state_dict(), ckpt_name)
-            ###############
+            # Compute average loss
+            avg_loss = tr_loss / nb_tr_steps
+            print(f'Epoch {epoch+1}: train_loss {avg_loss:.4f}')
+            
+            # Evaluate on test set
+            eval_results = self.test()
+            
+            # Save model if it's the best so far
+            if avg_loss < best_loss:
+                best_loss = avg_loss
+                self.save_model(ckpt_name)
+                
+            print('*' * 80)
 
-        print("Training finished. Loading best model...")
-        ckpt_path = os.path.abspath(ckpt_name)
-        ##########
-        torch.save(self.model.state_dict(), ckpt_path)
-        #########
-        # torch.save(self.model.cpu(), ckpt_name)
-        # saved_model = torch.load(ckpt_name, weights_only=True)
-        # self.model.load_state_dict(saved_model.state_dict())
+        print("Training finished.")
         return
 
     def test(self, content_level_eval=False):
@@ -178,95 +175,41 @@ class SupervisedTrainer:
         total_logits = []
 
         for step, inputs in enumerate(tqdm(self.data.test_dataloader, desc="Testing")):
-            # Move inputs to device
-            inputs = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v 
-                for k, v in inputs.items()}
-            # Disable gradient calculation.
+            for k, v in inputs.items():
+                if isinstance(v, torch.Tensor):
+                    inputs[k] = v.to(self.device)
             with torch.no_grad():
+                labels = inputs['labels']
                 output = self.model(inputs['features'], inputs['labels'])
                 logits = output['logits']
-                proc_labels = output.get('proc_labels', inputs['labels'])
+                preds = output['preds']
                 
                 texts.extend(inputs['text'])
-                pred_labels.extend(output['preds'].cpu().tolist())
-                true_labels.extend(proc_labels.cpu().tolist())
+                pred_labels.extend(preds.cpu().tolist())
+                true_labels.extend(labels.cpu().tolist())
                 total_logits.extend(logits.cpu().tolist())
 
-        # # Count unique predictions
-        # true_counts = Counter([label for seq in true_labels for label in seq if label != -1])
-        # pred_counts = Counter([label for seq in pred_labels for label in seq if label != -1])
-
-        # print("\n **True Labels Distribution**:", true_counts)
-        # print("**Predicted Labels Distribution**:", pred_counts)
-
-        # Convert to numpy arrays
-        true_labels = np.array(true_labels)
-        pred_labels = np.array(pred_labels)
-        
-        # Evaluate at different levels.
         if content_level_eval:
             # content level evaluation
-            print("*" * 8, "Content Level Evaluation", "*" * 8)
+            print("*" * 8, "Content Level Evalation", "*" * 8)
             content_result = self.content_level_eval(texts, true_labels, pred_labels)
         else:
             # sent level evalation
-            print("*" * 8, "Sentence Level Evaluation", "*" * 8)
+            print("*" * 8, "Sentence Level Evalation", "*" * 8)
             sent_result = self.sent_level_eval(texts, true_labels, pred_labels)
 
         # Word-level evaluation with improved handling
-        print("\n" + "*" * 8 + " Word Level Evaluation " + "*" * 8)
-        total_valid = 0
-        correct = 0
-        all_true = []
-        all_pred = []
-        
-        for t_seq, p_seq in zip(true_labels, pred_labels):
-            # Convert to numpy arrays and filter padding
-            t_seq = np.array(t_seq)
-            p_seq = np.array(p_seq)
-            valid_mask = t_seq != -1
-            
-            valid_t = t_seq[valid_mask]
-            valid_p = p_seq[valid_mask]
-            
-            # Safety checks
-            if len(valid_t) == 0:
-                continue
-                
-            if len(valid_t) != len(valid_p):
-                print(f"Length mismatch: true {len(valid_t)} vs pred {len(valid_p)}")
-                continue
-                
-            total_valid += len(valid_t)
-            correct += (valid_t == valid_p).sum()
-            all_true.extend(valid_t.tolist())
-            all_pred.extend(valid_p.tolist())
-
-        # Calculate metrics
-        if total_valid > 0:
-            accuracy = correct / total_valid
-            macro_f1 = f1_score(all_true, all_pred, average='macro')
-            print(f"Word Level Accuracy: {accuracy*100:.1f}%")
-            print(f"Macro F1 Score: {macro_f1*100:.1f}%")
-            print(f"Total Valid Tokens: {total_valid:,}")
-            
-            # Per-class metrics
-            unique_labels = np.unique(all_true)
-            if len(unique_labels) > 1:
-                precision = precision_score(all_true, all_pred, average=None)
-                recall = recall_score(all_true, all_pred, average=None)
-                print("\nClass-wise Performance:")
-                for idx, label in enumerate(unique_labels):
-                    label_name = self.id2label.get(label, str(label))
-                    print(f"{label_name}: Precision {precision[idx]*100:.1f}% | Recall {recall[idx]*100:.1f}%")
-        else:
-            print("No valid tokens found for evaluation!")
-
-        return {
-            'true_labels': all_true,
-            'pred_labels': all_pred,
-            'total_valid': total_valid
-        }
+        print("*" * 8, "Word Level Evalation", "*" * 8)
+        true_labels = np.array(true_labels)
+        pred_labels = np.array(pred_labels)
+        true_labels_1d = true_labels.reshape(-1)
+        pred_labels_1d = pred_labels.reshape(-1)
+        mask = true_labels_1d != -1
+        true_labels_1d = true_labels_1d[mask]
+        pred_labels_1d = pred_labels_1d[mask]
+        accuracy = (true_labels_1d == pred_labels_1d).astype(np.float32).mean().item()
+        print("Accuracy: {:.1f}".format(accuracy*100))
+        pass
     
     def content_level_eval(self, texts, true_labels, pred_labels):
         from collections import Counter
@@ -334,17 +277,22 @@ class SupervisedTrainer:
     def _get_most_common_tag(self, tags):
         """most_common_tag is a tuple: (tag, times)"""
         from collections import Counter
-
-        # Filter out padding (-1) tags.
-        filtered_tags = [t for t in tags if t != -1]
-        if not filtered_tags:
-            # Return a default tag. Adjust the default to match one of your keys.
-            return ("human", 1)  # or ("gpt2", 1) based on your application
-        mapped_tags = [self.id2label[tag] for tag in filtered_tags]
-        mapped_tags = [tag.split('-')[-1] for tag in mapped_tags]
-        tag_counts = Counter(mapped_tags)
+        tags = [self.id2label[tag] for tag in tags]
+        tags = [tag.split('-')[-1] for tag in tags]
+        tag_counts = Counter(tags)
         most_common_tag = tag_counts.most_common(1)[0]
         return most_common_tag
+
+        # # Filter out padding (-1) tags.
+        # filtered_tags = [t for t in tags if t != -1]
+        # if not filtered_tags:
+        #     # Return a default tag. Adjust the default to match one of your keys.
+        #     return ("human", 2)  # or ("gpt2", 1) based on your application
+        # mapped_tags = [self.id2label[tag] for tag in filtered_tags]
+        # mapped_tags = [tag.split('-')[-1] for tag in mapped_tags]
+        # tag_counts = Counter(mapped_tags)
+        # most_common_tag = tag_counts.most_common(1)[0]
+        # return most_common_tag
 
     def _get_precision_recall_acc_macrof1(self, true_labels, pred_labels):
         accuracy = accuracy_score(true_labels, pred_labels)
@@ -360,7 +308,6 @@ class SupervisedTrainer:
 
         result = {"precision":precision, "recall":recall, "accuracy":accuracy, "macro_f1":macro_f1}
         return result
-
 
 def construct_bmes_labels(labels):
     prefix = ['B-', 'M-', 'E-', 'S-']
@@ -407,71 +354,11 @@ def split_dataset(data_path, train_path, test_path, train_ratio=0.9):
     print('*'*32)
     pass
 
-# def split_dataset(data_path, train_path, test_path, train_ratio=0.9, seed=42):
-#     """
-#     Splits the dataset into training and test sets ensuring no overlap.
-    
-#     :param data_path: Path to the directory containing dataset files.
-#     :param train_path: Path to save the training dataset.
-#     :param test_path: Path to save the test dataset.
-#     :param train_ratio: Fraction of data to use for training (default: 0.9).
-#     :param seed: Random seed for reproducibility.
-#     """
-#     random.seed(seed)
-    
-#     # Collect all JSONL files in the data directory
-#     file_names = [file for file in os.listdir(data_path) if file.endswith('.jsonl')]
-#     print('*' * 32)
-#     print('The overall data sources:', file_names)
-
-#     total_samples = []
-
-#     # Load data from each JSONL file
-#     for file_name in file_names:
-#         file_path = os.path.join(data_path, file_name)
-#         with open(file_path, 'r', encoding='utf-8') as f:
-#             samples = [json.loads(line) for line in f]
-#             total_samples.extend(samples)
-    
-#     # Shuffle the dataset
-#     random.shuffle(total_samples)
-
-#     # Get unique texts to prevent duplication
-#     text_to_sample = {sample['text']: sample for sample in total_samples}
-#     unique_samples = list(text_to_sample.values())
-
-#     # Perform the train/test split
-#     split_index = int(len(unique_samples) * train_ratio)
-#     train_data = unique_samples[:split_index]
-#     test_data = unique_samples[split_index:]
-
-#     def save_dataset(fpath, data_samples):
-#         """Helper function to save datasets in JSONL format."""
-#         with open(fpath, 'w', encoding='utf-8') as f:
-#             for sample in tqdm(data_samples, desc=f"Saving {Path(fpath).stem}"):
-#                 f.write(json.dumps(sample, ensure_ascii=False) + '\n')
-
-#     # Save datasets
-#     save_dataset(train_path, train_data)
-#     save_dataset(test_path, test_data)
-
-#     # Verify no overlap
-#     train_texts = {sample['text'] for sample in train_data}
-#     test_texts = {sample['text'] for sample in test_data}
-#     overlap = train_texts.intersection(test_texts)
-
-#     print(f"🔍 Overlap between train and test: {len(overlap)} samples (should be 0)")
-#     assert len(overlap) == 0, "❌ Data leakage detected! Overlapping samples found in train and test sets."
-#     print("✅ No data leakage! Train and test sets are properly split.")
-
-#     print('*' * 32)
-
-
 import argparse
 def parse_args():
     parser = argparse.ArgumentParser()
     # Add argument for processing method selection.
-    parser.add_argument("--method", type=str, choices=["patch_average", "convolution_like", "patch_shuffle"], default="patch_shuffle")
+    parser.add_argument("--method", type=str, choices=["patch_average", "convolution_like", "patch_shuffle"], default="patch_average")
     parser.add_argument("--patch_size", type=int, default=10)
     parser.add_argument("--kernel_size", type=int, default=10)
     parser.add_argument("--stride", type=int, default=5)
@@ -489,7 +376,7 @@ def parse_args():
     parser.add_argument('--train_path', type=str, default='')
     parser.add_argument('--test_path', type=str, default='')
 
-    parser.add_argument('--num_train_epochs', type=int, default=1)
+    parser.add_argument('--num_train_epochs', type=int, default=5)
     parser.add_argument('--weight_decay', type=float, default=0.1)
     parser.add_argument('--lr', type=float, default=5e-5)
     parser.add_argument('--warm_up_ratio', type=float, default=0.1)
@@ -498,13 +385,19 @@ def parse_args():
     parser.add_argument('--test_content', action='store_true')
     return parser.parse_args()
 
+
 if __name__ == "__main__":
     args = parse_args()
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
     if args.split_dataset:
         print("Log INFO: split dataset...")
-        split_dataset(data_path=args.data_path, train_path=args.train_path, test_path=args.test_path, train_ratio=args.train_ratio)
+        split_dataset(
+            data_path=args.data_path,
+            train_path=args.train_path,
+            test_path=args.test_path,
+            train_ratio=args.train_ratio
+            )
 
     # en_labels = backend_model_info.en_labels
     # en_labels = {
@@ -540,8 +433,8 @@ if __name__ == "__main__":
     if args.train_mode == 'classify':
         print('-' * 32 + 'classify' + '-' * 32)
         if args.model == 'SeqXGPT':
+            print('-' * 32 + "SeqXGPT" + '-' * 32)
             classifier = SeqXGPTModel(embedding_size=512, seq_len=1024, num_layers=4, num_heads=2, id2labels=id2label)
-            # classifier.to("cuda" if torch.cuda.is_available() else "cpu")
             ckpt_name = 'checkpoint/seqxgpt_cls_model.pt'
         elif args.model == 'CNN':
             print('-' * 32 + "CNN" + '-' * 32)
@@ -559,21 +452,12 @@ if __name__ == "__main__":
 
         if args.do_test:    
             print("Log INFO: do test...")
-            classifier = SeqXGPTModel(embedding_size=512, seq_len=1024, num_layers=4, num_heads=2, id2labels=id2label)
-            #########################
-            trainer = SupervisedTrainer(data, classifier, en_labels, id2label, args)
-            trainer.load_model(ckpt_name)
+            saved_model = torch.load(ckpt_name)
+            trainer.model.load_state_dict(saved_model.state_dict())
             trainer.test(content_level_eval=args.test_content)
-            ###########################
-            # saved_model = torch.load(ckpt_name, weights_only=True)
-            # trainer.model.load_state_dict(saved_model.state_dict())
-            # trainer.test(content_level_eval=args.test_content)
         else:
             print("Log INFO: do train...")
             trainer.train(ckpt_name=ckpt_name)
-            #########
-            trainer.load_model(ckpt_name)
-            #########
 
     """contrastive training"""
     if args.train_mode == 'contrastive_learning':
@@ -583,7 +467,6 @@ if __name__ == "__main__":
             ckpt_name = 'checkpoint/cnn_con_model.pt'
         elif args.model == 'SeqXGPT':
             classifier = SeqXGPTModel(embedding_size=768, seq_len=1024, num_layers=6, id2labels=id2label)
-            # classifier.to("cuda" if torch.cuda.is_available() else "cpu")
             ckpt_name = 'checkpoint/seqxgpt_con_model.pt'
         else:
             classifier = ModelWiseTransformerClassifier(class_num=backend_model_info.en_class_num)
@@ -602,7 +485,6 @@ if __name__ == "__main__":
             classifier.load_state_dict(saved_model.state_dict())
         elif args.model == 'SeqXGPT':
             classifier = SeqXGPTModel(embedding_size=768, seq_len=1024, num_layers=6, id2labels=id2label)
-            # classifier.to("cuda" if torch.cuda.is_available() else "cpu")
             ckpt_name = 'checkpoint/seqxgpt_cc_model.pt'
             saved_model = torch.load(ckpt_name, weights_only=True)
             classifier.load_state_dict(saved_model.state_dict())
@@ -612,6 +494,5 @@ if __name__ == "__main__":
             saved_model = torch.load(ckpt_name, weights_only=True)
             classifier.load_state_dict(saved_model.state_dict())
 
-        # trainer = SupervisedTrainer(data, classifier, train_mode='Contrastive_Classifier')
-        trainer = SupervisedTrainer(data, classifier)
+        trainer = SupervisedTrainer(data, classifier, train_mode='Contrastive_Classifier')
         trainer.train(ckpt_name=ckpt_name)

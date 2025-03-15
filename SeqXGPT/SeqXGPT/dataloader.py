@@ -70,15 +70,6 @@ class DataManager:
         processed_data_filename = Path(data_path).stem + "_processed.pkl"
         processed_data_path = os.path.join(save_dir, processed_data_filename)
 
-        # if os.path.exists(processed_data_path):
-        #     log_info = '*'*4 + 'Load From {}'.format(processed_data_path) + '*'*4
-        #     print('*' * len(log_info))
-        #     print(log_info)
-        #     print('*' * len(log_info))
-        #     with open(processed_data_path, 'rb') as f:
-        #         samples_dict = pickle.load(f)
-        #     return samples_dict
-
         # Load raw data based on file type (JSON or JSONL).
         with open(data_path, 'r') as f:
             if data_path.endswith('json'):
@@ -94,15 +85,6 @@ class DataManager:
             text = item['text']
             label = item['label']
             prompt_len = item.get('prompt_len', 0)
-            # prompt_len = item['prompt_len']
-            # prompt_len = 0
-
-            # if label in ['gptj', 'gpt2', 'llama', 'gpt3re']:
-            #     continue
-            # if label == 'gpt3sum':
-            #     label = 'gpt3re'
-            # if label == 'gpt3re':
-            #     continue
 
             # Extract and align token-level features.
             label_int = item['label_int']
@@ -132,7 +114,6 @@ class DataManager:
 
             # Transpose the token features for compatibility with the model.
             ll_tokens_list = np.array(ll_tokens_list)
-            # ll_tokens_list = normalize(ll_tokens_list, norm='l1')
             ll_tokens_list = ll_tokens_list.transpose()
             ll_tokens_list = ll_tokens_list.tolist()
 
@@ -140,9 +121,6 @@ class DataManager:
             samples_dict['prompt_len'].append(prompt_len)
             samples_dict['label'].append(label)
             samples_dict['text'].append(text)
-        
-        # with open(processed_data_path, 'wb') as f:
-        #     pickle.dump(samples_dict, f)
 
         return samples_dict
 
@@ -160,8 +138,6 @@ class DataManager:
                           collate_fn=self.data_collator)
     
     def data_collator(self, samples):
-        # samples: {'features': [], 'prompt_len': [], 'label': [], 'text': []}
-        # batch: {'features': [], 'labels': [], 'text': []}
         batch = {}
 
         # Extract fields from the samples.
