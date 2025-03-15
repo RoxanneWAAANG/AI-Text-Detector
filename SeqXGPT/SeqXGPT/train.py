@@ -193,23 +193,25 @@ class SupervisedTrainer:
             # content level evaluation
             print("*" * 8, "Content Level Evalation", "*" * 8)
             content_result = self.content_level_eval(texts, true_labels, pred_labels)
+            return content_result
         else:
             # sent level evalation
             print("*" * 8, "Sentence Level Evalation", "*" * 8)
             sent_result = self.sent_level_eval(texts, true_labels, pred_labels)
+            return sent_result
 
-        # Word-level evaluation with improved handling
-        print("*" * 8, "Word Level Evalation", "*" * 8)
-        true_labels = np.array(true_labels)
-        pred_labels = np.array(pred_labels)
-        true_labels_1d = true_labels.reshape(-1)
-        pred_labels_1d = pred_labels.reshape(-1)
-        mask = true_labels_1d != -1
-        true_labels_1d = true_labels_1d[mask]
-        pred_labels_1d = pred_labels_1d[mask]
-        accuracy = (true_labels_1d == pred_labels_1d).astype(np.float32).mean().item()
-        print("Accuracy: {:.1f}".format(accuracy*100))
-        pass
+        # # Word-level evaluation with improved handling
+        # print("*" * 8, "Word Level Evalation", "*" * 8)
+        # true_labels = np.array(true_labels)
+        # pred_labels = np.array(pred_labels)
+        # true_labels_1d = true_labels.reshape(-1)
+        # pred_labels_1d = pred_labels.reshape(-1)
+        # mask = true_labels_1d != -1
+        # true_labels_1d = true_labels_1d[mask]
+        # pred_labels_1d = pred_labels_1d[mask]
+        # accuracy = (true_labels_1d == pred_labels_1d).astype(np.float32).mean().item()
+        # print("Accuracy: {:.1f}".format(accuracy*100))
+        # pass
     
     def content_level_eval(self, texts, true_labels, pred_labels):
         from collections import Counter
@@ -277,22 +279,18 @@ class SupervisedTrainer:
     def _get_most_common_tag(self, tags):
         """most_common_tag is a tuple: (tag, times)"""
         from collections import Counter
-        tags = [self.id2label[tag] for tag in tags]
-        tags = [tag.split('-')[-1] for tag in tags]
-        tag_counts = Counter(tags)
+        # Filter out padding (-1) tags.
+        filtered_tags = [t for t in tags if t != -1]
+        if not filtered_tags:
+            # Return a default tag.
+            # Adjust the default to match one of your keys.
+            return ("human", 2)  # or ("gpt2", 1) based on your application
+        
+        mapped_tags = [self.id2label[tag] for tag in filtered_tags]
+        mapped_tags = [tag.split('-')[-1] for tag in mapped_tags]
+        tag_counts = Counter(mapped_tags)
         most_common_tag = tag_counts.most_common(1)[0]
         return most_common_tag
-
-        # # Filter out padding (-1) tags.
-        # filtered_tags = [t for t in tags if t != -1]
-        # if not filtered_tags:
-        #     # Return a default tag. Adjust the default to match one of your keys.
-        #     return ("human", 2)  # or ("gpt2", 1) based on your application
-        # mapped_tags = [self.id2label[tag] for tag in filtered_tags]
-        # mapped_tags = [tag.split('-')[-1] for tag in mapped_tags]
-        # tag_counts = Counter(mapped_tags)
-        # most_common_tag = tag_counts.most_common(1)[0]
-        # return most_common_tag
 
     def _get_precision_recall_acc_macrof1(self, true_labels, pred_labels):
         accuracy = accuracy_score(true_labels, pred_labels)
@@ -398,17 +396,6 @@ if __name__ == "__main__":
             test_path=args.test_path,
             train_ratio=args.train_ratio
             )
-
-    # en_labels = backend_model_info.en_labels
-    # en_labels = {
-    #     'gpt2': 0,
-    #     'gptneo': 1,
-    #     'gptj': 2,
-    #     'llama': 3,
-    #     'gpt3re': 4,
-    #     # 'gpt3sum': 3,
-    #     'human': 5
-    # }
 
     en_labels = {
         'gpt2': 0,

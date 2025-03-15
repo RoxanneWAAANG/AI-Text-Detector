@@ -112,6 +112,12 @@ class SeqXGPTModel(nn.Module):
         logits = self.classifier(dropout_outputs)
 
         if self.training:
+            # # Calculate class weights based on label distribution
+            # label_counts = torch.bincount(proc_labels[proc_labels != -1])
+            # weights = 1.0 / (label_counts.float() / label_counts.sum())
+            # # Normalize weights
+            # weights = weights / weights.sum() * len(weights)
+            # loss_fct = nn.CrossEntropyLoss(weight=weights, ignore_index=-1)
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
             loss = loss_fct(logits.view(-1, self.label_num), proc_labels.view(-1))
             return {
@@ -208,11 +214,28 @@ class SeqXGPTModel(nn.Module):
         random.shuffle(patches)
         return torch.cat(patches, dim=1)
 
+    # Modify patch_labels to better preserve label information
     def patch_labels(self, labels, patch_size):
         batch_size, seq_len = labels.shape
         pad_size = (patch_size - (seq_len % patch_size)) % patch_size
         padded = F.pad(labels, (0, pad_size), value=-1)
-        return padded.view(batch_size, -1, patch_size)[:, :, 0]  # Take first label per patch
+        # Instead of just taking first label, use majority voting within each patch
+        patches = padded.view(batch_size, -1, patch_size)
+        result = []
+        for b in range(batch_size):
+            batch_result = []
+            for p in range(patches.size(1)):
+                patch = patches[b, p]
+                # Filter out padding
+                valid_labels = patch[patch != -1]
+                if len(valid_labels) > 0:
+                    # Use most common label in patch
+                    values, counts = torch.unique(valid_labels, return_counts=True)
+                    batch_result.append(values[counts.argmax()].item())
+                else:
+                    batch_result.append(-1)
+            result.append(batch_result)
+        return torch.tensor(result, device=labels.device)
 
     def convolution_like_labels(self, labels, kernel_size, stride):
         """Processes labels with a sliding window."""
