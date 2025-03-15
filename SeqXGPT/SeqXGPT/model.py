@@ -59,20 +59,21 @@ class SeqXGPTModel(nn.Module):
                                            allowed_transitions=allowed_transitions(id2labels))
         self.crf.trans_m.data *= 0
         
-        # Store preprocessing method and parameters
-        self.preprocess_method = "patch_average"
-        self.patch_size = 10
-        self.kernel_size = 10
-        self.stride = 5
+        # # Store preprocessing method and parameters
+        # self.preprocess_method = "patch_average"
+        # self.patch_size = 10
+        # self.kernel_size = 10
+        # self.stride = 5
 
-    def set_preprocess_params(self, method="patch_average", patch_size=10, kernel_size=10, stride=5):
-        """Set preprocessing parameters for the model"""
-        self.preprocess_method = method
-        self.patch_size = patch_size
-        self.kernel_size = kernel_size
-        self.stride = stride
+    # def set_preprocess_params(self, method="patch_average", patch_size=10, kernel_size=10, stride=5):
+    #     """Set preprocessing parameters for the model"""
+    #     self.preprocess_method = method
+    #     self.patch_size = patch_size
+    #     self.kernel_size = kernel_size
+    #     self.stride = stride
 
-    def forward(self, inputs, labels):
+    def forward(self, inputs, labels, method="patch_average", patch_size=10,
+                kernel_size=10, stride=5):
         """
         Unified forward method to match other models' interface
         inputs: Tensor of shape (batch, original_seq_len, embedding_size)
@@ -82,20 +83,20 @@ class SeqXGPTModel(nn.Module):
         orig_mask = labels.gt(-1)  # shape: (batch, original_seq_len)
         
         # Preprocess inputs and at the same time process the mask and labels
-        if self.preprocess_method == "patch_average":
-            inputs = self.patch_average(inputs, self.patch_size)
-            mask = self.patch_mask(orig_mask, self.patch_size)
-            proc_labels = self.patch_labels(labels, self.patch_size)
-        elif self.preprocess_method == "convolution_like":
-            inputs = self.convolution_like(inputs, self.kernel_size, self.stride)
-            mask = self.convolution_like_mask(orig_mask, self.kernel_size, self.stride)
-            proc_labels = self.convolution_like_labels(labels, self.kernel_size, self.stride)
-        elif self.preprocess_method == "patch_shuffle":
-            inputs = self.patch_shuffle(inputs, self.patch_size)
-            mask = self.patch_shuffle_mask(orig_mask, self.patch_size)
-            proc_labels = self.patch_shuffle_labels(labels, self.patch_size)
+        if method == "patch_average":
+            inputs = self.patch_average(inputs, patch_size)
+            mask = self.patch_mask(orig_mask, patch_size)
+            proc_labels = self.patch_labels(labels, patch_size)
+        elif method == "convolution_like":
+            inputs = self.convolution_like(inputs, kernel_size, stride)
+            mask = self.convolution_like_mask(orig_mask, kernel_size, stride)
+            proc_labels = self.convolution_like_labels(labels, kernel_size, stride)
+        elif method == "patch_shuffle":
+            inputs = self.patch_shuffle(inputs, patch_size)
+            mask = self.patch_shuffle_mask(orig_mask, patch_size)
+            proc_labels = self.patch_shuffle_labels(labels, patch_size)
         else:
-            raise ValueError(f"Unknown method: {self.preprocess_method}")
+            raise ValueError(f"Unknown method: {method}")
         
         # Transformer expects a padding mask where True indicates a padded token.
         padding_mask = ~mask  # shape: (batch, new_seq_len)
@@ -357,7 +358,6 @@ class ModelWiseTransformerClassifier(nn.Module):
 
     def __init__(self, id2labels, seq_len, intermediate_size = 512, num_layers=2, dropout_rate=0.1):
         super(ModelWiseTransformerClassifier, self).__init__()
-        # feature_enc_layers = [(512, 10, 5)] + [(512, 3, 2)] * 4 + [(512,2,2)] + [(512,2,2)]
         feature_enc_layers = [(64, 5, 1)] + [(128, 3, 1)] * 3 + [(64, 3, 1)]
         self.conv = ConvFeatureExtractionModel(
             conv_layers=feature_enc_layers,

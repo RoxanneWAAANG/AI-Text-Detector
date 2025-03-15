@@ -362,7 +362,7 @@ def parse_args():
     parser.add_argument("--stride", type=int, default=5)
     #=============================================#
 
-    parser.add_argument('--model', type=str, default='SeqXGPT')
+    parser.add_argument('--model', type=str, default='RNN')
     parser.add_argument('--gpu', type=str, default='0')
     parser.add_argument('--train_mode', type=str, default='classify')
     parser.add_argument('--batch_size', type=int, default=32)
