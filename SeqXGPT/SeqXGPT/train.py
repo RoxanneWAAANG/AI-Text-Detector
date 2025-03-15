@@ -362,7 +362,7 @@ def parse_args():
     parser.add_argument("--stride", type=int, default=5)
     #=============================================#
 
-    parser.add_argument('--model', type=str, default='RNN')
+    parser.add_argument('--model', type=str, default='Transformer')
     parser.add_argument('--gpu', type=str, default='0')
     parser.add_argument('--train_mode', type=str, default='classify')
     parser.add_argument('--batch_size', type=int, default=32)
@@ -427,8 +427,8 @@ if __name__ == "__main__":
             print('-' * 32 + "CNN" + '-' * 32)
             classifier = ModelWiseCNNClassifier(id2labels=id2label)
             ckpt_name = 'checkpoint/cnn_cls_model.pt'
-        elif args.model == 'RNN':
-            print('-' * 32 + "RNN" + '-' * 32)
+        elif args.model == 'Transformer':
+            print('-' * 32 + "Transformer" + '-' * 32)
             classifier = TransformerOnlyClassifier(id2labels=id2label, seq_len=args.seq_len)
             ckpt_name = 'checkpoint/rnn_cls_model.pt'
         else:
