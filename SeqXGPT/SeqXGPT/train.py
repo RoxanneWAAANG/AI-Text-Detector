@@ -131,7 +131,7 @@ class SupervisedTrainer:
             # Count training steps.
             nb_tr_steps = 0
 
-            for step, inputs in enumerate(tqdm(self.data.train_dataloader, desc="Iteration")):
+            for step, inputs in enumerate(tqdm(self.data.train_dataloader, desc="Training")):
                 # Move inputs to device
                 inputs = {k: v.to(self.device) if isinstance(v, torch.Tensor) else v 
                     for k, v in inputs.items()}
