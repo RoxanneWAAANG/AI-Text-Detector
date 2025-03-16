@@ -439,7 +439,7 @@ class ModelWiseTransformerClassifier(nn.Module):
 # Directly process sequences using a Transformer encoder.
 class TransformerOnlyClassifier(nn.Module):
 
-    def __init__(self, id2labels, seq_len, embedding_size=4, num_heads=2, intermediate_size=64, num_layers=2, dropout_rate=0.1):
+    def __init__(self, id2labels, seq_len, embedding_size=64, num_heads=2, intermediate_size=64, num_layers=2, dropout_rate=0.1):
         super(TransformerOnlyClassifier, self).__init__()
 
         self.encoder_layer = TransformerEncoderLayer(
@@ -451,23 +451,28 @@ class TransformerOnlyClassifier(nn.Module):
         self.encoder = TransformerEncoder(encoder_layer=self.encoder_layer,
                                             num_layers=num_layers)
 
-        # self.position_encoding = torch.zeros((seq_len, embedding_size))
-        # for pos in range(seq_len):
-        #     for i in range(0, embedding_size, 2):
-        #         self.position_encoding[pos, i] = torch.sin(
-        #             torch.tensor(pos / (10000**((2 * i) / embedding_size))))
-        #         self.position_encoding[pos, i + 1] = torch.cos(
-        #             torch.tensor(pos / (10000**((2 * (i + 1)) / embedding_size))))
-        self.register_buffer(
-            'position_encoding', 
-            get_positional_encoding(seq_len, embedding_size)
-        )
+        self.position_encoding = torch.zeros((seq_len, embedding_size))
+        for pos in range(seq_len):
+            for i in range(0, embedding_size, 2):
+                self.position_encoding[pos, i] = torch.sin(
+                    torch.tensor(pos / (10000**((2 * i) / embedding_size))))
+                self.position_encoding[pos, i + 1] = torch.cos(
+                    torch.tensor(pos / (10000**((2 * (i + 1)) / embedding_size))))
+        # self.register_buffer(
+        #     'position_encoding', 
+        #     get_positional_encoding(seq_len, embedding_size)
+        # )
         
         self.norm = nn.LayerNorm(embedding_size)
         
         self.label_num = len(id2labels)
         self.dropout = nn.Dropout(dropout_rate)
-        self.classifier = nn.Sequential(nn.Linear(embedding_size, self.label_num))
+        # self.classifier = nn.Sequential(nn.Linear(embedding_size, self.label_num))
+        self.classifier = nn.Sequential(
+            nn.Linear(embedding_size, embedding_size // 2),
+            nn.ReLU(),
+            nn.Linear(embedding_size // 2, self.label_num)
+        )
         self.crf = ConditionalRandomField(num_tags=self.label_num,
                                           allowed_transitions=allowed_transitions(id2labels))
         self.crf.trans_m.data *= 0

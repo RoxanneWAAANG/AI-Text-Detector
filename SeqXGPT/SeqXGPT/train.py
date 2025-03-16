@@ -370,11 +370,11 @@ def parse_args():
 
     parser.add_argument('--train_ratio', type=float, default=0.9)
     parser.add_argument('--split_dataset', action='store_true')
-    parser.add_argument('--data_path', type=str, default='')
-    parser.add_argument('--train_path', type=str, default='')
-    parser.add_argument('--test_path', type=str, default='')
+    parser.add_argument('--data_path', type=str, default='dataset/processed_data')
+    parser.add_argument('--train_path', type=str, default='dataset/processed_data/train.jsonl')
+    parser.add_argument('--test_path', type=str, default='dataset/processed_data/test.jsonl')
 
-    parser.add_argument('--num_train_epochs', type=int, default=5)
+    parser.add_argument('--num_train_epochs', type=int, default=100)
     parser.add_argument('--weight_decay', type=float, default=0.1)
     parser.add_argument('--lr', type=float, default=5e-5)
     parser.add_argument('--warm_up_ratio', type=float, default=0.1)
@@ -430,10 +430,10 @@ if __name__ == "__main__":
         elif args.model == 'Transformer':
             print('-' * 32 + "Transformer" + '-' * 32)
             classifier = TransformerOnlyClassifier(id2labels=id2label, seq_len=args.seq_len)
-            ckpt_name = 'checkpoint/rnn_cls_model.pt'
+            ckpt_name = 'checkpoint/transformer_cls_model.pt'
         else:
             classifier = ModelWiseTransformerClassifier(id2labels=id2label, seq_len=args.seq_len)
-            ckpt_name = 'checkpoint/transformer_cls_model.pt'
+            ckpt_name = 'checkpoint/hybrid_cls_model.pt'
 
         trainer = SupervisedTrainer(data, classifier, en_labels, id2label, args)
 
@@ -457,7 +457,7 @@ if __name__ == "__main__":
             ckpt_name = 'checkpoint/seqxgpt_con_model.pt'
         else:
             classifier = ModelWiseTransformerClassifier(class_num=backend_model_info.en_class_num)
-            ckpt_name = 'checkpoint/transformer_con_model.pt'
+            ckpt_name = 'checkpoint/hybrid_con_model.pt'
 
         trainer = SupervisedTrainer(data, classifier, loss_criterion = 'ContrastiveLoss')
         trainer.train(ckpt_name=ckpt_name)
@@ -477,7 +477,7 @@ if __name__ == "__main__":
             classifier.load_state_dict(saved_model.state_dict())
         else:
             classifier = ModelWiseTransformerClassifier(class_num=backend_model_info.en_class_num)
-            ckpt_name = 'checkpoint/transformer_cc_model.pt'
+            ckpt_name = 'checkpoint/hybrid_cc_model.pt'
             saved_model = torch.load(ckpt_name, weights_only=True)
             classifier.load_state_dict(saved_model.state_dict())
 
