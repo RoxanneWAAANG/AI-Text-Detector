@@ -71,7 +71,7 @@ class DataManager:
         processed_data_path = os.path.join(save_dir, processed_data_filename)
 
         # Load raw data based on file type (JSON or JSONL).
-        with open(data_path, 'r') as f:
+        with open(data_path, 'r', encoding='utf-8') as f:
             if data_path.endswith('json'):
                 samples = json.load(f)
             else:
