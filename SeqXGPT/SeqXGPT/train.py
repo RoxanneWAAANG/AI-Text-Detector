@@ -372,8 +372,8 @@ def parse_args():
     parser.add_argument('--train_ratio', type=float, default=0.9)
     parser.add_argument('--split_dataset', action='store_true')
     parser.add_argument('--data_path', type=str, default='dataset/dataset_part')
-    parser.add_argument('--train_path', type=str, default='dataset/SeqXGPT_output/sample_tr.jsonl')
-    parser.add_argument('--test_path', type=str, default='dataset/SeqXGPT_output/sample_te.jsonl')
+    parser.add_argument('--train_path', type=str, default='dataset/dataset_part/train.jsonl')
+    parser.add_argument('--test_path', type=str, default='dataset/dataset_part/test.jsonl')
 
     parser.add_argument('--num_train_epochs', type=int, default=100)
     parser.add_argument('--weight_decay', type=float, default=0.1)

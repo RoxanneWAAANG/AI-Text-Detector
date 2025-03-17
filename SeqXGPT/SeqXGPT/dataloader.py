@@ -78,7 +78,13 @@ class DataManager:
                 samples = [json.loads(line) for line in f]
 
         # Initialize an empty dictionary to store processed samples.
-        samples_dict = {'features': [], 'prompt_len': [], 'label': [], 'text': []}
+        samples_dict = {
+            'features': [],
+            'prompt_len': [],
+            'label': [],
+            'label_int': [],
+            'text': []
+        }
 
         # Iterate over samples with a progress bar.
         for item in tqdm(samples):
@@ -121,10 +127,10 @@ class DataManager:
             samples_dict['features'].append(ll_tokens_list)
             samples_dict['prompt_len'].append(prompt_len)
             samples_dict['label'].append(label)
+            samples_dict['label_int'].append(label_int)
             samples_dict['text'].append(text)
 
         return samples_dict
-
 
     def get_train_dataloader(self, dataset):
         return DataLoader(dataset,
