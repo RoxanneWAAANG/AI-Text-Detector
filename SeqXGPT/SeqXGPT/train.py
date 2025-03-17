@@ -357,10 +357,10 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser()
     # Add argument for processing method selection.
-    parser.add_argument("--method", type=str, choices=["patch_average", "convolution_like", "patch_shuffle"], default="convolution_like")
-    parser.add_argument("--patch_size", type=int, default=3)
-    parser.add_argument("--kernel_size", type=int, default=3)
-    parser.add_argument("--stride", type=int, default=0)
+    parser.add_argument("--method", type=str, choices=["patch_average", "convolution_like", "patch_shuffle"], default="patch_average")
+    parser.add_argument("--patch_size", type=int, default=5)
+    parser.add_argument("--kernel_size", type=int, default=5)
+    parser.add_argument("--stride", type=int, default=1)
     #=============================================#
 
     parser.add_argument('--model', type=str, default='Transformer')
