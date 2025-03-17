@@ -398,11 +398,15 @@ if __name__ == "__main__":
             train_ratio=args.train_ratio
             )
 
+    # en_labels = {
+    #     'gpt2': 0,
+    #     'llama': 1,
+    #     'human': 2,
+    #     'gpt3re': 3,
+    # }
     en_labels = {
         'gpt2': 0,
-        'llama': 1,
         'human': 2,
-        'gpt3re': 3,
     }
 
     id2label = construct_bmes_labels(en_labels)
@@ -422,7 +426,7 @@ if __name__ == "__main__":
         print('-' * 32 + 'classify' + '-' * 32)
         if args.model == 'SeqXGPT':
             print('-' * 32 + "SeqXGPT" + '-' * 32)
-            classifier = SeqXGPTModel(embedding_size=512, seq_len=1024, num_layers=4, num_heads=4, id2labels=id2label)
+            classifier = SeqXGPTModel(embedding_size=512, seq_len=1024, num_layers=4, num_heads=2, id2labels=id2label)
             ckpt_name = 'checkpoint/seqxgpt_cls_model.pt'
         elif args.model == 'CNN':
             print('-' * 32 + "CNN" + '-' * 32)

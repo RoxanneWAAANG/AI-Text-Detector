@@ -84,7 +84,8 @@ class DataManager:
         for item in tqdm(samples):
             text = item['text']
             label = item['label']
-            prompt_len = item.get('prompt_len', 0)
+            # prompt_len = item.get('prompt_len', 0)
+            prompt_len = len(text)
 
             # Extract and align token-level features.
             label_int = item['label_int']
