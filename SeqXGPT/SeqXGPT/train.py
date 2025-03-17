@@ -371,11 +371,11 @@ def parse_args():
 
     parser.add_argument('--train_ratio', type=float, default=0.9)
     parser.add_argument('--split_dataset', action='store_true')
-    parser.add_argument('--data_path', type=str, default='dataset/dataset_part')
-    parser.add_argument('--train_path', type=str, default='dataset/dataset_part/train.jsonl')
-    parser.add_argument('--test_path', type=str, default='dataset/dataset_part/test.jsonl')
+    parser.add_argument('--data_path', type=str, default='dataset/processed_data')
+    parser.add_argument('--train_path', type=str, default='dataset/processed_data/train.jsonl')
+    parser.add_argument('--test_path', type=str, default='dataset/processed_data/test.jsonl')
 
-    parser.add_argument('--num_train_epochs', type=int, default=10)
+    parser.add_argument('--num_train_epochs', type=int, default=5)
     parser.add_argument('--weight_decay', type=float, default=0.1)
     parser.add_argument('--lr', type=float, default=5e-5)
     parser.add_argument('--warm_up_ratio', type=float, default=0.1)
@@ -398,16 +398,16 @@ if __name__ == "__main__":
             train_ratio=args.train_ratio
             )
 
-    # en_labels = {
-    #     'gpt2': 0,
-    #     'llama': 1,
-    #     'human': 2,
-    #     'gpt3re': 3,
-    # }
     en_labels = {
         'gpt2': 0,
+        'llama': 1,
         'human': 2,
+        'gpt3re': 3,
     }
+    # en_labels = {
+    #     'gpt2': 0,
+    #     'human': 2,
+    # }
 
     id2label = construct_bmes_labels(en_labels)
     label2id = {v: k for k, v in id2label.items()}
@@ -426,7 +426,7 @@ if __name__ == "__main__":
         print('-' * 32 + 'classify' + '-' * 32)
         if args.model == 'SeqXGPT':
             print('-' * 32 + "SeqXGPT" + '-' * 32)
-            classifier = SeqXGPTModel(embedding_size=128, seq_len=1024, num_layers=4, num_heads=2, id2labels=id2label)
+            classifier = SeqXGPTModel(embedding_size=128, seq_len=1024, num_layers=4, num_heads=4, id2labels=id2label)
             ckpt_name = 'checkpoint/seqxgpt_cls_model.pt'
         elif args.model == 'CNN':
             print('-' * 32 + "CNN" + '-' * 32)

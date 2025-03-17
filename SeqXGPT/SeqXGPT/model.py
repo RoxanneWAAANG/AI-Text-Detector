@@ -34,7 +34,7 @@ def get_positional_encoding(seq_length, embedding_size, device=None):
 
 
 class SeqXGPTModel(nn.Module):
-    def __init__(self, id2labels, seq_len, embedding_size=4, num_heads=2,
+    def __init__(self, id2labels, embedding_size=128, num_heads=4,
                  intermediate_size=64, num_layers=2, dropout_rate=0.1):
         super().__init__()
         self.embedding_size = embedding_size
