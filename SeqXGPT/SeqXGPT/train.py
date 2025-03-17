@@ -19,7 +19,7 @@ warnings.filterwarnings('ignore')
 # project_path = os.path.abspath('')
 # if project_path not in sys.path:
 #     sys.path.append(project_path)
-sys.path.append("C:/Users/xiong/Desktop/AIPI.540/AI-Text-Detector/SeqXGPT")
+sys.path.append("/Users/ruoxinwang/Desktop/Duke/Deep_Learning_and_Applications/Natural_Language_Processing/AI-Text-Detector/SeqXGPT")
 import backend_model_info
 from dataloader import DataManager
 from model import ModelWiseCNNClassifier, ModelWiseTransformerClassifier, TransformerOnlyClassifier
