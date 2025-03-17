@@ -58,22 +58,9 @@ class SeqXGPTModel(nn.Module):
         self.crf = ConditionalRandomField(num_tags=self.label_num,
                                            allowed_transitions=allowed_transitions(id2labels))
         self.crf.trans_m.data *= 0
-        
-        # # Store preprocessing method and parameters
-        # self.preprocess_method = "patch_average"
-        # self.patch_size = 10
-        # self.kernel_size = 10
-        # self.stride = 5
 
-    # def set_preprocess_params(self, method="patch_average", patch_size=10, kernel_size=10, stride=5):
-    #     """Set preprocessing parameters for the model"""
-    #     self.preprocess_method = method
-    #     self.patch_size = patch_size
-    #     self.kernel_size = kernel_size
-    #     self.stride = stride
-
-    def forward(self, inputs, labels, method="patch_average", patch_size=10,
-                kernel_size=10, stride=5):
+    def forward(self, inputs, labels, method="convolution_like", patch_size=3,
+                kernel_size=3, stride=1):
         """
         Unified forward method to match other models' interface
         inputs: Tensor of shape (batch, original_seq_len, embedding_size)
@@ -98,11 +85,31 @@ class SeqXGPTModel(nn.Module):
         else:
             raise ValueError(f"Unknown method: {method}")
         
+        #=============================================#
+        # Ensure mask has the same sequence length as inputs
+        current_seq_length = inputs.size(1)
+        if mask.size(1) != current_seq_length:
+            # Either truncate or pad the mask to match the sequence length
+            if mask.size(1) > current_seq_length:
+                mask = mask[:, :current_seq_length]
+            else:
+                pad_size = current_seq_length - mask.size(1)
+                mask = F.pad(mask, (0, pad_size), value=False)
+            
+            # Also adjust proc_labels to match
+            if proc_labels.size(1) != current_seq_length:
+                if proc_labels.size(1) > current_seq_length:
+                    proc_labels = proc_labels[:, :current_seq_length]
+                else:
+                    pad_size = current_seq_length - proc_labels.size(1)
+                    proc_labels = F.pad(proc_labels, (0, pad_size), value=-1)
+        #=============================================#
+        
         # Transformer expects a padding mask where True indicates a padded token.
         padding_mask = ~mask  # shape: (batch, new_seq_len)
         
         # Dynamically generate positional encoding for the new sequence length.
-        current_seq_length = inputs.size(1)
+        # current_seq_length = inputs.size(1)
         pos_encoding = get_positional_encoding(current_seq_length, self.embedding_size, inputs.device)
                 
         # Add positional encoding to the processed inputs.

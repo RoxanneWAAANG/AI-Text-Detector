@@ -19,7 +19,8 @@ warnings.filterwarnings('ignore')
 # project_path = os.path.abspath('')
 # if project_path not in sys.path:
 #     sys.path.append(project_path)
-sys.path.append("C:/Users/xiong/Desktop/AIPI.540/AI-Text-Detector/SeqXGPT")
+# sys.path.append("C:/Users/xiong/Desktop/AIPI.540/AI-Text-Detector/SeqXGPT")
+sys.path.append("/Users/ruoxinwang/Desktop/Duke/Deep_Learning_and_Applications/Natural_Language_Processing/AI-Text-Detector/SeqXGPT")
 import backend_model_info
 from dataloader import DataManager
 from model import ModelWiseCNNClassifier, ModelWiseTransformerClassifier, TransformerOnlyClassifier
@@ -356,13 +357,13 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser()
     # Add argument for processing method selection.
-    parser.add_argument("--method", type=str, choices=["patch_average", "convolution_like", "patch_shuffle"], default="patch_average")
-    parser.add_argument("--patch_size", type=int, default=5)
-    parser.add_argument("--kernel_size", type=int, default=5)
+    parser.add_argument("--method", type=str, choices=["patch_average", "convolution_like", "patch_shuffle"], default="convolution_like")
+    parser.add_argument("--patch_size", type=int, default=3)
+    parser.add_argument("--kernel_size", type=int, default=3)
     parser.add_argument("--stride", type=int, default=1)
     #=============================================#
 
-    parser.add_argument('--model', type=str, default='Transformer')
+    parser.add_argument('--model', type=str, default='SeqXGPT')
     parser.add_argument('--gpu', type=str, default='0')
     parser.add_argument('--train_mode', type=str, default='classify')
     parser.add_argument('--batch_size', type=int, default=32)
@@ -370,9 +371,9 @@ def parse_args():
 
     parser.add_argument('--train_ratio', type=float, default=0.9)
     parser.add_argument('--split_dataset', action='store_true')
-    parser.add_argument('--data_path', type=str, default='dataset/processed_data')
-    parser.add_argument('--train_path', type=str, default='dataset/processed_data/train.jsonl')
-    parser.add_argument('--test_path', type=str, default='dataset/processed_data/test.jsonl')
+    parser.add_argument('--data_path', type=str, default='dataset/dataset_part')
+    parser.add_argument('--train_path', type=str, default='dataset/SeqXGPT_output/sample_tr.jsonl')
+    parser.add_argument('--test_path', type=str, default='dataset/SeqXGPT_output/sample_te.jsonl')
 
     parser.add_argument('--num_train_epochs', type=int, default=100)
     parser.add_argument('--weight_decay', type=float, default=0.1)
