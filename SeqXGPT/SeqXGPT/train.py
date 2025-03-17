@@ -19,7 +19,7 @@ warnings.filterwarnings('ignore')
 # project_path = os.path.abspath('')
 # if project_path not in sys.path:
 #     sys.path.append(project_path)
-# sys.path.append("C:/Users/xiong/Desktop/AIPI.540/AI-Text-Detector/SeqXGPT")
+# sys.path.append("/Users/ruoxinwang/Desktop/Duke/Deep_Learning_and_Applications/Natural_Language_Processing/AI-Text-Detector/SeqXGPT")
 sys.path.append("/Users/ruoxinwang/Desktop/Duke/Deep_Learning_and_Applications/Natural_Language_Processing/AI-Text-Detector/SeqXGPT")
 import backend_model_info
 from dataloader import DataManager
@@ -329,7 +329,7 @@ def split_dataset(data_path, train_path, test_path, train_ratio=0.9):
 
     total_samples = []
     for file_path in file_paths:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, 'r') as f:
             samples = [json.loads(line) for line in f]
             total_samples.extend(samples)
     
@@ -363,7 +363,7 @@ def parse_args():
     parser.add_argument("--stride", type=int, default=0)
     #=============================================#
 
-    parser.add_argument('--model', type=str, default='SeqXGPT')
+    parser.add_argument('--model', type=str, default='Transformer')
     parser.add_argument('--gpu', type=str, default='0')
     parser.add_argument('--train_mode', type=str, default='classify')
     parser.add_argument('--batch_size', type=int, default=32)
@@ -375,7 +375,7 @@ def parse_args():
     parser.add_argument('--train_path', type=str, default='dataset/dataset_part/train.jsonl')
     parser.add_argument('--test_path', type=str, default='dataset/dataset_part/test.jsonl')
 
-    parser.add_argument('--num_train_epochs', type=int, default=20)
+    parser.add_argument('--num_train_epochs', type=int, default=100)
     parser.add_argument('--weight_decay', type=float, default=0.1)
     parser.add_argument('--lr', type=float, default=5e-5)
     parser.add_argument('--warm_up_ratio', type=float, default=0.1)
