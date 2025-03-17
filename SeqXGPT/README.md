@@ -112,6 +112,8 @@ python dataset/gen_features.py --get_unlabeled_features --input_file dataset/Seq
 
 ## Models
 
+### SeqXGPT
+
 We have provided the **complete code** for the model, dataloader, and train/test-related function under the `SeqXGPT` folder.
 
 Before training and testing, please refer to the [Feature Extraction](#feature-extraction) section to extract relevant features, which will serve as the `--data_path`. The reference command is as follows:
@@ -147,45 +149,32 @@ Instead of relying solely on 1D convolution (or other sequential models), we app
 #### III. Patch Shuffling:
 After dividing the wave into patches, we shuffle the order of these patches. Shuffling serves as a data augmentation strategy that encourages the model to learn features that are invariant to the exact ordering of local segments. By reducing dependency on sequential order, the model becomes less prone to overfitting and gains improved generalization performance when faced with varied or perturbed input sequences.
 
-## Experiment Results
 
-We evaluated our model on two tasks:
+### DetectGPT
 
-- **Bi-classification:** The goal was to identify whether a text is human-written or AI-generated.
-- **Multi-classification:** The task involved classifying texts into one of four categories: `human`, `GPT2`, `GPT3-re`, or `LLaMA`.
+We have provided the complete code under the `DetectGPT` folder to obtain the loss for the perturbed sentences (a total of 40) and the loss for the original sentences.
 
-To better understand the contributions of our proposed modifications, we compared several variants of our model:
+Specifically, if used for **sentence-level AIGT detection**, you **need to** process the documents in the original dataset into individual sentences. You can use the following code:
 
-- **SeqXGPT:** The baseline model.
-- **SeqXGPT (PA):** Incorporates patch-based averaging to smooth the log-probability wave, reducing local noise.
-- **SeqXGPT (Conv):** Applies 2D convolution to extract local spatial correlations across the wave, enhancing feature robustness.
-- **SeqXGPT (PS):** Uses patch shuffling as a data augmentation strategy, promoting invariance to the ordering of local segments.
+```python
+import nltk
+sent_separator = nltk.data.load('tokenizers/punkt/english.pickle')
 
-### Bi-Classification
+# text is the document to be split into sentences
+sents = sent_separator.tokenize(text)
+```
 
-For the bi-classification task, the performance results (measured in accuracy) on the AI-generated text from GPT2, GPT3-re, and LLaMA are summarized in the table below:
+### Sniffer
 
-|         | SeqXGPT | SeqXGPT (PA) | SeqXGPT (Conv) | SeqXGPT (ps) |
-|---------|---------|--------------|----------------|--------------|
-| **gpt2**    | 91.2%   | 92.3%        | 93.1%          | 92.8%        |
-| **gpt3re**  | 90.5%   | 91.7%        | 92.5%          | 91.9%        |
-| **llama**   | 89.8%   | 90.9%        | 91.6%          | 91.2%        |
+We refer to the [Sniffer GitHub](https://github.com/OpenLMLab/Sniffer) and modify the original Sniffer to obtain the sentence-level Sniffer. For the complete code, see the `Sniffer` folder.
 
+### Sent-RoBERTa
 
-### Multi-Classification
+We implement sentence-level AIGT detection with RoBERTa based on the sentence classification task. The complete model, dataloader, and training codes can be found in the `Sent-RoBERTa` folder. It's important to **note that**, before inputting, you also need to process the documents in the original dataset into individual sentences.
 
-For the multi-classification task, the performance results (measured in accuracy) on the AI-generated text from GPT2, GPT3-re, and LLaMA are summarized in the table below:
+### Seq-RoBERTa
 
-|         | SeqXGPT | SeqXGPT (PA) | SeqXGPT (Conv) | SeqXGPT (ps) |
-|---------|---------|--------------|----------------|--------------|
-| **gpt2**    | 91.2%   | 92.3%        | 93.1%          | 92.8%        |
-| **gpt3re**  | 90.5%   | 91.7%        | 92.5%          | 91.9%        |
-| **llama**   | 89.8%   | 90.9%        | 91.6%          | 91.2%        |
-
-*Note: The above numbers are representative values. In our actual experiments, both bi-classification and multi-classification tasks exhibited similar trends. Notably, the SeqXGPT (Conv) variant consistently achieved the highest performance across all AI sources, demonstrating the benefits of incorporating 2D convolution for capturing local patterns. The patch-based and patch-shuffling operations also contributed to reducing overfitting and enhancing the model’s generalization.*
-
-Overall, these results indicate that our proposed modifications significantly improve detection performance, enabling robust identification of AI-generated content across different language models. The enhanced feature extraction—through smoothing, convolution, and shuffling—plays a critical role in achieving these improvements.
-
+We implement sentence-level AIGT detection with RoBERTa based on the sequence labeling task. The complete model, dataloader, and training codes can be found in the `Seq-RoBERTa` folder.
 
 ## Requirements
 
