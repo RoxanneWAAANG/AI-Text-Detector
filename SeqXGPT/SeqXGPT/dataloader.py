@@ -71,7 +71,7 @@ class DataManager:
         processed_data_path = os.path.join(save_dir, processed_data_filename)
 
         # Load raw data based on file type (JSON or JSONL).
-        with open(data_path, 'r') as f:
+        with open(data_path, 'r', encoding='utf-8') as f:
             if data_path.endswith('json'):
                 samples = json.load(f)
             else:
@@ -82,7 +82,7 @@ class DataManager:
             'features': [],
             'prompt_len': [],
             'label': [],
-            'label_int': [],
+            # 'label_int': [],
             'text': []
         }
 
@@ -90,8 +90,8 @@ class DataManager:
         for item in tqdm(samples):
             text = item['text']
             label = item['label']
-            # prompt_len = item.get('prompt_len', 0)
-            prompt_len = len(text)
+            prompt_len = item.get('prompt_len', 0)
+            # prompt_len = len(text)
 
             # Extract and align token-level features.
             label_int = item['label_int']
@@ -127,7 +127,7 @@ class DataManager:
             samples_dict['features'].append(ll_tokens_list)
             samples_dict['prompt_len'].append(prompt_len)
             samples_dict['label'].append(label)
-            samples_dict['label_int'].append(label_int)
+            # samples_dict['label_int'].append(label_int)
             samples_dict['text'].append(text)
 
         return samples_dict
