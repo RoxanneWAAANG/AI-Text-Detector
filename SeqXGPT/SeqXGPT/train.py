@@ -19,7 +19,7 @@ warnings.filterwarnings('ignore')
 # project_path = os.path.abspath('')
 # if project_path not in sys.path:
 #     sys.path.append(project_path)
-# sys.path.append("C:/Users/xiong/Desktop/AIPI.540/AI-Text-Detector/SeqXGPT")
+# sys.path.append("/Users/ruoxinwang/Desktop/Duke/Deep_Learning_and_Applications/Natural_Language_Processing/AI-Text-Detector/SeqXGPT")
 sys.path.append("/Users/ruoxinwang/Desktop/Duke/Deep_Learning_and_Applications/Natural_Language_Processing/AI-Text-Detector/SeqXGPT")
 import backend_model_info
 from dataloader import DataManager
@@ -358,9 +358,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # Add argument for processing method selection.
     parser.add_argument("--method", type=str, choices=["patch_average", "convolution_like", "patch_shuffle"], default="patch_average")
-    parser.add_argument("--patch_size", type=int, default=5)
-    parser.add_argument("--kernel_size", type=int, default=5)
-    parser.add_argument("--stride", type=int, default=1)
+    parser.add_argument("--patch_size", type=int, default=10)
+    parser.add_argument("--kernel_size", type=int, default=10)
+    parser.add_argument("--stride", type=int, default=5)
     #=============================================#
 
     parser.add_argument('--model', type=str, default='Transformer')
