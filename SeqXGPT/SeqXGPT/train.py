@@ -19,7 +19,8 @@ warnings.filterwarnings('ignore')
 # project_path = os.path.abspath('')
 # if project_path not in sys.path:
 #     sys.path.append(project_path)
-sys.path.append("C:/Users/xiong/Desktop/AIPI.540/AI-Text-Detector/SeqXGPT")
+sys.path.append("/mnt/xinfeng/research/AI_Human_Detection/Test_Ruoxin_Wang/AI-Text-Detector/SeqXGPT")
+# sys.path.append("C:/Users/xiong/Desktop/AIPI.540/AI-Text-Detector/SeqXGPT")
 # sys.path.append("/Users/ruoxinwang/Desktop/Duke/Deep_Learning_and_Applications/Natural_Language_Processing/AI-Text-Detector/SeqXGPT")
 import backend_model_info
 from dataloader import DataManager
@@ -285,10 +286,10 @@ class SupervisedTrainer:
         if not filtered_tags:
             # Return a default tag.
             # Adjust the default to match one of your keys.
-            return ("human", 2)  # or ("gpt2", 1) based on your application
+            return ("human", 2)
         
         mapped_tags = [self.id2label[tag] for tag in filtered_tags]
-        mapped_tags = [tag.split('-')[-1] for tag in mapped_tags]
+        # mapped_tags = [tag.split('-')[-1] for tag in mapped_tags]
         tag_counts = Counter(mapped_tags)
         most_common_tag = tag_counts.most_common(1)[0]
         return most_common_tag
@@ -308,17 +309,21 @@ class SupervisedTrainer:
         result = {"precision":precision, "recall":recall, "accuracy":accuracy, "macro_f1":macro_f1}
         return result
 
-def construct_bmes_labels(labels):
-    prefix = ['B-', 'M-', 'E-', 'S-']
-    id2label = {}
-    counter = 0
-
-    for label, id in labels.items():
-        for pre in prefix:
-            id2label[counter] = pre + label
-            counter += 1
-    
+def construct_labels(labels):
+    id2label = {v: k for k, v in labels.items()}
     return id2label
+
+# def construct_bmes_labels(labels):
+#     prefix = ['B-', 'M-', 'E-', 'S-']
+#     id2label = {}
+#     counter = 0
+
+#     for label, id in labels.items():
+#         for pre in prefix:
+#             id2label[counter] = pre + label
+#             counter += 1
+    
+#     return id2label
 
 def split_dataset(data_path, train_path, test_path, train_ratio=0.9):
     file_names = [file_name for file_name in os.listdir(data_path) if file_name.endswith('.jsonl')]
@@ -371,9 +376,9 @@ def parse_args():
 
     parser.add_argument('--train_ratio', type=float, default=0.9)
     parser.add_argument('--split_dataset', action='store_true')
-    parser.add_argument('--data_path', type=str, default='dataset/processed_data')
-    parser.add_argument('--train_path', type=str, default='dataset/processed_data/train.jsonl')
-    parser.add_argument('--test_path', type=str, default='dataset/processed_data/test.jsonl')
+    parser.add_argument('--data_path', type=str, default='dataset/SeqXGPT_output')
+    parser.add_argument('--train_path', type=str, default='dataset/SeqXGPT_output/train.jsonl')
+    parser.add_argument('--test_path', type=str, default='dataset/SeqXGPT_output/test.jsonl')
 
     parser.add_argument('--num_train_epochs', type=int, default=5)
     parser.add_argument('--weight_decay', type=float, default=0.1)
@@ -409,7 +414,8 @@ if __name__ == "__main__":
     #     'human': 2,
     # }
 
-    id2label = construct_bmes_labels(en_labels)
+    # id2label = construct_bmes_labels(en_labels)
+    id2label = construct_labels(en_labels)
     label2id = {v: k for k, v in id2label.items()}
 
     data = DataManager(
@@ -426,8 +432,8 @@ if __name__ == "__main__":
         print('-' * 32 + 'classify' + '-' * 32)
         if args.model == 'SeqXGPT':
             print('-' * 32 + "SeqXGPT" + '-' * 32)
-            classifier = SeqXGPTModel(embedding_size=128, seq_len=1024, num_layers=4, num_heads=4, id2labels=id2label)
-            ckpt_name = 'checkpoint/seqxgpt_cls_model.pt'
+            classifier = SeqXGPTModel(embedding_size=128, num_layers=4, num_heads=4, id2labels=id2label)
+            ckpt_name = 'checkpoint/seqxgpt_cls_model_conv.pt'
         elif args.model == 'CNN':
             print('-' * 32 + "CNN" + '-' * 32)
             classifier = ModelWiseCNNClassifier(id2labels=id2label)

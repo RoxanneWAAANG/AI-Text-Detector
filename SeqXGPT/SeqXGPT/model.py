@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-
 from typing import List, Tuple
 from torch.nn import TransformerEncoder, TransformerEncoderLayer
 from transformers.models.bert import BertModel
@@ -55,11 +54,12 @@ class SeqXGPTModel(nn.Module):
         self.label_num = len(id2labels)
         self.dropout = nn.Dropout(dropout_rate)
         self.classifier = nn.Sequential(nn.Linear(embedding_size, self.label_num))
-        self.crf = ConditionalRandomField(num_tags=self.label_num,
-                                           allowed_transitions=allowed_transitions(id2labels))
+        # self.crf = ConditionalRandomField(num_tags=self.label_num,
+        #                                    allowed_transitions=allowed_transitions(id2labels))
+        self.crf = ConditionalRandomField(num_tags=self.label_num, allowed_transitions=None)
         self.crf.trans_m.data *= 0
 
-    def forward(self, inputs, labels, method="convolution_like", patch_size=3,
+    def forward(self, inputs, labels, method="patch_average", patch_size=3,
                 kernel_size=3, stride=1):
         """
         Unified forward method to match other models' interface
@@ -280,9 +280,7 @@ class ConvFeatureExtractionModel(nn.Module):
             return nn.Sequential(
                 nn.Conv1d(in_channels=n_in, out_channels=n_out, kernel_size=k, stride=stride, padding=padding, bias=conv_bias),
                 nn.Dropout(conv_dropout),
-                # nn.BatchNorm1d(n_out),
                 nn.ReLU(),
-                # nn.MaxPool1d(kernel_size=2, stride=2)
             )
 
         in_d = 1
@@ -322,7 +320,8 @@ class ModelWiseCNNClassifier(nn.Module):
         self.classifier = nn.Sequential(nn.Linear(embedding_size, self.label_num))
         # Conditional Random Field (CRF) ensures structured predictions with label dependencies.
         # Allowed Transitions: Defined by id2labels for valid label sequences.
-        self.crf = ConditionalRandomField(num_tags=self.label_num, allowed_transitions=allowed_transitions(id2labels))
+        # self.crf = ConditionalRandomField(num_tags=self.label_num, allowed_transitions=allowed_transitions(id2labels))
+        self.crf = ConditionalRandomField(num_tags=self.label_num, allowed_transitions=None)
         self.crf.trans_m.data *= 0
 
     def conv_feat_extract(self, x):
@@ -382,14 +381,6 @@ class ModelWiseTransformerClassifier(nn.Module):
             batch_first=True)
         self.encoder = TransformerEncoder(encoder_layer=self.encoder_layer,
                                             num_layers=num_layers)
-
-        # self.position_encoding = torch.zeros((seq_len, embedding_size))
-        # for pos in range(seq_len):
-        #     for i in range(0, embedding_size, 2):
-        #         self.position_encoding[pos, i] = torch.sin(
-        #             torch.tensor(pos / (10000**((2 * i) / embedding_size))))
-        #         self.position_encoding[pos, i + 1] = torch.cos(
-        #             torch.tensor(pos / (10000**((2 * (i + 1)) / embedding_size))))
         self.register_buffer(
             'position_encoding', 
             get_positional_encoding(seq_len, embedding_size)

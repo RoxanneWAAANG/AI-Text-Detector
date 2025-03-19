@@ -195,24 +195,27 @@ class DataManager:
         - E-: End of a sequence.
         - S-: Single-token sequences.
         """
-        prefix = ['B-', 'M-', 'E-', 'S-']
         if seq_len <= 0:
             return None
-        # Special case for single-token sequences.
-        elif seq_len == 1:
-            # Assign the 'S-' prefix.
-            label = 'S-' + label
-            return torch.tensor([self.label2id[label]], dtype=torch.long)
-        # For sequences with more than one token:
-        else:
-            ids = []
-            # Add the 'B-' label for the start of the sequence.
-            ids.append(self.label2id['B-'+label])
-            # Add 'M-' labels for the middle tokens.
-            ids.extend([self.label2id['M-'+label]] * (seq_len - 2))
-            # Add the 'E-' label for the end of the sequence.
-            ids.append(self.label2id['E-'+label])
-            return torch.tensor(ids, dtype=torch.long)
+        return torch.tensor([self.label2id[label]] * seq_len, dtype=torch.long)
+        # prefix = ['B-', 'M-', 'E-', 'S-']
+        # if seq_len <= 0:
+        #     return None
+        # # Special case for single-token sequences.
+        # elif seq_len == 1:
+        #     # Assign the 'S-' prefix.
+        #     label = 'S-' + label
+        #     return torch.tensor([self.label2id[label]], dtype=torch.long)
+        # # For sequences with more than one token:
+        # else:
+        #     ids = []
+        #     # Add the 'B-' label for the start of the sequence.
+        #     ids.append(self.label2id['B-'+label])
+        #     # Add 'M-' labels for the middle tokens.
+        #     ids.extend([self.label2id['M-'+label]] * (seq_len - 2))
+        #     # Add the 'E-' label for the end of the sequence.
+        #     ids.append(self.label2id['E-'+label])
+        #     return torch.tensor(ids, dtype=torch.long)
 
     def process_and_convert_to_tensor(self, data):
         """ here, data is features. """
