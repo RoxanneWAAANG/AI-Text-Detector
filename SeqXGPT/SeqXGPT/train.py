@@ -362,13 +362,13 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser()
     # Add argument for processing method selection.
-    parser.add_argument("--method", type=str, choices=["patch_average", "convolution_like", "patch_shuffle"], default="convolution_like")
+    parser.add_argument("--method", type=str, choices=["patch_average", "convolution_like", "patch_shuffle"], default="patch_shuffle")
     parser.add_argument("--patch_size", type=int, default=3)
     parser.add_argument("--kernel_size", type=int, default=3)
     parser.add_argument("--stride", type=int, default=1)
     #=============================================#
 
-    parser.add_argument('--model', type=str, default='SeqXGPT')
+    parser.add_argument('--model', type=str, default='Transformer')
     parser.add_argument('--gpu', type=str, default='0')
     parser.add_argument('--train_mode', type=str, default='classify')
     parser.add_argument('--batch_size', type=int, default=32)
@@ -380,7 +380,7 @@ def parse_args():
     parser.add_argument('--train_path', type=str, default='dataset/SeqXGPT_output/train.jsonl')
     parser.add_argument('--test_path', type=str, default='dataset/SeqXGPT_output/test.jsonl')
 
-    parser.add_argument('--num_train_epochs', type=int, default=5)
+    parser.add_argument('--num_train_epochs', type=int, default=20)
     parser.add_argument('--weight_decay', type=float, default=0.1)
     parser.add_argument('--lr', type=float, default=5e-5)
     parser.add_argument('--warm_up_ratio', type=float, default=0.1)
@@ -433,7 +433,7 @@ if __name__ == "__main__":
         if args.model == 'SeqXGPT':
             print('-' * 32 + "SeqXGPT" + '-' * 32)
             classifier = SeqXGPTModel(embedding_size=128, num_layers=4, num_heads=4, id2labels=id2label)
-            ckpt_name = 'checkpoint/seqxgpt_cls_model_conv.pt'
+            ckpt_name = 'checkpoint/seqxgpt_cls_model.pt'
         elif args.model == 'CNN':
             print('-' * 32 + "CNN" + '-' * 32)
             classifier = ModelWiseCNNClassifier(id2labels=id2label)

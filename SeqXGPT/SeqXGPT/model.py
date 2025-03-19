@@ -471,8 +471,9 @@ class TransformerOnlyClassifier(nn.Module):
             nn.ReLU(),
             nn.Linear(embedding_size // 2, self.label_num)
         )
-        self.crf = ConditionalRandomField(num_tags=self.label_num,
-                                          allowed_transitions=allowed_transitions(id2labels))
+        # self.crf = ConditionalRandomField(num_tags=self.label_num,
+        #                                   allowed_transitions=allowed_transitions(id2labels))
+        self.crf = ConditionalRandomField(num_tags=self.label_num, allowed_transitions=None)
         self.crf.trans_m.data *= 0
     
     def forward(self, inputs, labels):
