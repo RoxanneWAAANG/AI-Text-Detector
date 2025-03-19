@@ -4,10 +4,8 @@ import numpy as np
 
 from backend_utils import BBPETokenizerPPLCalc, SPLlamaTokenizerPPLCalc, CharLevelTokenizerPPLCalc, SPChatGLMTokenizerPPLCalc
 from backend_utils import split_sentence
-# mosec
 from mosec import Worker
 from mosec.mixin import MsgpackMixin
-# llama
 from transformers import LlamaForCausalLM, LlamaTokenizer
 from transformers import AutoModelForCausalLM, AutoTokenizer, StoppingCriteria, StoppingCriteriaList
 from transformers.models.gpt2.tokenization_gpt2 import bytes_to_unicode
@@ -41,7 +39,6 @@ class SnifferBaseModel(MsgpackMixin, Worker):
             result = self.base_tokenizer.decode(gen_tokens.tolist())
             return result
         # 2. batch generate
-        # msgpack.unpackb(self.text, use_list=False) == tuple
         elif isinstance(self.text, tuple):
             inputs = self.base_tokenizer(self.text,
                                          padding=True,
@@ -395,7 +392,6 @@ class SnifferAlpacaModel(SnifferBaseModel):
             trust_remote_code=True,
             device_map="auto",
             load_in_8bit=True)
-        # self.base_tokenizer.pad_token_id = self.base_tokenizer.eos_token_id
 
     def forward_gen(self):
         self.base_tokenizer.padding_side = 'left'
@@ -407,7 +403,6 @@ class SnifferAlpacaModel(SnifferBaseModel):
 
                 ### Response:
                 """
-        # instruction = "Rewrite the following paragraph in a different style using your own words."
 
         # treat single generate as batch generate
         if isinstance(self.text, str):
@@ -421,8 +416,6 @@ class SnifferAlpacaModel(SnifferBaseModel):
             **inputs, do_sample=True, max_new_tokens=self.generate_len)
         gen_texts = self.base_tokenizer.batch_decode(
             gen_tokens, skip_special_tokens=True)
-        # TODO change gen_text.find() to gen_text.split() 
-        # TODO output.gen_text("### Response:")[1].strip()
         gen_texts = [gen_text[gen_text.find('### Response:\n') + 14 : ].strip() for gen_text in gen_texts]
         
         if len(gen_texts) == 1:
@@ -450,7 +443,6 @@ class SnifferDollyModel(SnifferBaseModel):
 
                         ### Response:
                         """
-        # instruction = "Rewrite the following paragraph in a different style using your own words."
         response_key_token_id = self.base_tokenizer.encode("### Response:")[0]
         end_key_token_id = self.base_tokenizer.encode("### End")[0]
 
@@ -459,7 +451,6 @@ class SnifferDollyModel(SnifferBaseModel):
             self.text = [self.text]
         
         processed_text = [PROMPT_FORMAT.format(instruction=text) for text in self.text]
-        # inputs = self.base_tokenizer(processed_text, padding=True, max_length=512, truncation=True,return_tensors="pt").to(self.device)
         inputs = self.base_tokenizer(processed_text, return_tensors="pt").to(self.device)
         gen_tokens = self.base_model.generate(**inputs, pad_token_id=self.base_tokenizer.pad_token_id, 
                                               eos_token_id=end_key_token_id, do_sample=True, max_new_tokens=1024, top_p=0.92, top_k=0)

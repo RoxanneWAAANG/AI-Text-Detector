@@ -16,12 +16,7 @@ from transformers.optimization import AdamW, get_linear_schedule_with_warmup
 
 warnings.filterwarnings('ignore')
 
-# project_path = os.path.abspath('')
-# if project_path not in sys.path:
-#     sys.path.append(project_path)
-sys.path.append("/mnt/xinfeng/research/AI_Human_Detection/Test_Ruoxin_Wang/AI-Text-Detector/SeqXGPT")
-# sys.path.append("C:/Users/xiong/Desktop/AIPI.540/AI-Text-Detector/SeqXGPT")
-# sys.path.append("/Users/ruoxinwang/Desktop/Duke/Deep_Learning_and_Applications/Natural_Language_Processing/AI-Text-Detector/SeqXGPT")
+sys.path.append("C:/Users/xiong/Desktop/AIPI.540/AI-Text-Detector/SeqXGPT")
 import backend_model_info
 from dataloader import DataManager
 from model import ModelWiseCNNClassifier, ModelWiseTransformerClassifier, TransformerOnlyClassifier
@@ -33,25 +28,12 @@ class SupervisedTrainer:
         self.data = data
         self.model = model
         self.en_labels = en_labels
-        # id2label: Mapping from IDs to labels.id2label.
         self.id2label =id2label
 
         self.seq_len = args.seq_len
         self.num_train_epochs = args.num_train_epochs
         self.weight_decay = args.weight_decay
         self.lr = args.lr
-        # Warm-up ratio for the learning rate scheduler.
-        # specifies the fraction of the total training steps during which the learning rate will gradually increase (warm-up phase).
-        # After the warm-up phase, the learning rate typically decays according to the scheduler.
-        # 1. Stabilizing Training:
-        # At the beginning of training, large gradients can destabilize updates.
-        # A warm-up period allows the model to start training with small learning rates and gradually ramp up.
-
-        # 2. Preventing Gradient Explosions:
-        # Gradually increasing the learning rate reduces the risk of large updates that might cause gradient explosions.
-        
-        # 3. Improved Convergence:
-        # Warm-up has been shown empirically to improve the convergence of large-scale models and transformers.
         self.warm_up_ratio = args.warm_up_ratio
 
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -201,19 +183,6 @@ class SupervisedTrainer:
             print("*" * 8, "Sentence Level Evalation", "*" * 8)
             sent_result = self.sent_level_eval(texts, true_labels, pred_labels)
             return sent_result
-
-        # # Word-level evaluation with improved handling
-        # print("*" * 8, "Word Level Evalation", "*" * 8)
-        # true_labels = np.array(true_labels)
-        # pred_labels = np.array(pred_labels)
-        # true_labels_1d = true_labels.reshape(-1)
-        # pred_labels_1d = pred_labels.reshape(-1)
-        # mask = true_labels_1d != -1
-        # true_labels_1d = true_labels_1d[mask]
-        # pred_labels_1d = pred_labels_1d[mask]
-        # accuracy = (true_labels_1d == pred_labels_1d).astype(np.float32).mean().item()
-        # print("Accuracy: {:.1f}".format(accuracy*100))
-        # pass
     
     def content_level_eval(self, texts, true_labels, pred_labels):
         from collections import Counter
@@ -309,21 +278,11 @@ class SupervisedTrainer:
         result = {"precision":precision, "recall":recall, "accuracy":accuracy, "macro_f1":macro_f1}
         return result
 
+
 def construct_labels(labels):
     id2label = {v: k for k, v in labels.items()}
     return id2label
 
-# def construct_bmes_labels(labels):
-#     prefix = ['B-', 'M-', 'E-', 'S-']
-#     id2label = {}
-#     counter = 0
-
-#     for label, id in labels.items():
-#         for pre in prefix:
-#             id2label[counter] = pre + label
-#             counter += 1
-    
-#     return id2label
 
 def split_dataset(data_path, train_path, test_path, train_ratio=0.9):
     file_names = [file_name for file_name in os.listdir(data_path) if file_name.endswith('.jsonl')]
@@ -358,6 +317,7 @@ def split_dataset(data_path, train_path, test_path, train_ratio=0.9):
     print('*'*32)
     pass
 
+
 import argparse
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -366,11 +326,10 @@ def parse_args():
     parser.add_argument("--patch_size", type=int, default=3)
     parser.add_argument("--kernel_size", type=int, default=3)
     parser.add_argument("--stride", type=int, default=1)
-    #=============================================#
 
     parser.add_argument('--model', type=str, default='Transformer')
     parser.add_argument('--gpu', type=str, default='0')
-    parser.add_argument('--train_mode', type=str, default='classify')
+    parser.add_argument('--train_mode', type=str, default='contrastive_classify')
     parser.add_argument('--batch_size', type=int, default=32)
     parser.add_argument('--seq_len', type=int, default=1024)
 
@@ -414,7 +373,6 @@ if __name__ == "__main__":
     #     'human': 2,
     # }
 
-    # id2label = construct_bmes_labels(en_labels)
     id2label = construct_labels(en_labels)
     label2id = {v: k for k, v in id2label.items()}
 

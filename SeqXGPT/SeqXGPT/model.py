@@ -29,7 +29,7 @@ def get_positional_encoding(seq_length, embedding_size, device=None):
                          -(math.log(10000.0) / embedding_size))
     pe[:, 0::2] = torch.sin(position * div_term)
     pe[:, 1::2] = torch.cos(position * div_term)
-    return pe.unsqueeze(0)  # Add batch dimension (1, seq_length, embedding_size)
+    return pe.unsqueeze(0)
 
 
 class SeqXGPTModel(nn.Module):
@@ -54,8 +54,6 @@ class SeqXGPTModel(nn.Module):
         self.label_num = len(id2labels)
         self.dropout = nn.Dropout(dropout_rate)
         self.classifier = nn.Sequential(nn.Linear(embedding_size, self.label_num))
-        # self.crf = ConditionalRandomField(num_tags=self.label_num,
-        #                                    allowed_transitions=allowed_transitions(id2labels))
         self.crf = ConditionalRandomField(num_tags=self.label_num, allowed_transitions=None)
         self.crf.trans_m.data *= 0
 
@@ -67,7 +65,7 @@ class SeqXGPTModel(nn.Module):
         labels: Tensor of shape (batch, original_seq_len) with -1 indicating padding
         """
         # Create the original valid token mask from labels (True for valid tokens)
-        orig_mask = labels.gt(-1)  # shape: (batch, original_seq_len)
+        orig_mask = labels.gt(-1)
         
         # Preprocess inputs and at the same time process the mask and labels
         if method == "patch_average":
@@ -85,7 +83,6 @@ class SeqXGPTModel(nn.Module):
         else:
             raise ValueError(f"Unknown method: {method}")
         
-        #=============================================#
         # Ensure mask has the same sequence length as inputs
         current_seq_length = inputs.size(1)
         if mask.size(1) != current_seq_length:
@@ -103,29 +100,21 @@ class SeqXGPTModel(nn.Module):
                 else:
                     pad_size = current_seq_length - proc_labels.size(1)
                     proc_labels = F.pad(proc_labels, (0, pad_size), value=-1)
-        #=============================================#
-        
+
         # Transformer expects a padding mask where True indicates a padded token.
-        padding_mask = ~mask  # shape: (batch, new_seq_len)
+        padding_mask = ~mask
         
         # Dynamically generate positional encoding for the new sequence length.
-        # current_seq_length = inputs.size(1)
         pos_encoding = get_positional_encoding(current_seq_length, self.embedding_size, inputs.device)
                 
         # Add positional encoding to the processed inputs.
-        outputs = inputs + pos_encoding  # shape: (batch, new_seq_len, embedding_size)
+        outputs = inputs + pos_encoding
         outputs = self.norm(outputs)
         outputs = self.encoder(outputs, src_key_padding_mask=padding_mask)
         dropout_outputs = self.dropout(outputs)
         logits = self.classifier(dropout_outputs)
 
         if self.training:
-            # # Calculate class weights based on label distribution
-            # label_counts = torch.bincount(proc_labels[proc_labels != -1])
-            # weights = 1.0 / (label_counts.float() / label_counts.sum())
-            # # Normalize weights
-            # weights = weights / weights.sum() * len(weights)
-            # loss_fct = nn.CrossEntropyLoss(weight=weights, ignore_index=-1)
             loss_fct = nn.CrossEntropyLoss(ignore_index=-1)
             loss = loss_fct(logits.view(-1, self.label_num), proc_labels.view(-1))
             return {
@@ -201,8 +190,8 @@ class SeqXGPTModel(nn.Module):
         patches = []
         seq_length = mask.size(1)
         for i in range(0, seq_length, patch_size):
-            patch = mask[:, i:i+patch_size]  # shape: (batch, patch_size)
-            patch_valid = patch.any(dim=1, keepdim=True)  # shape: (batch, 1)
+            patch = mask[:, i:i+patch_size]
+            patch_valid = patch.any(dim=1, keepdim=True)
             patches.append(patch_valid)
         return torch.cat(patches, dim=1)
 
@@ -294,7 +283,6 @@ class ConvFeatureExtractionModel(nn.Module):
             in_d = dim
 
     def forward(self, x):
-        # x = x.unsqueeze(1)
         for conv in self.conv_layers:
             x = conv(x)
         return x
@@ -320,7 +308,6 @@ class ModelWiseCNNClassifier(nn.Module):
         self.classifier = nn.Sequential(nn.Linear(embedding_size, self.label_num))
         # Conditional Random Field (CRF) ensures structured predictions with label dependencies.
         # Allowed Transitions: Defined by id2labels for valid label sequences.
-        # self.crf = ConditionalRandomField(num_tags=self.label_num, allowed_transitions=allowed_transitions(id2labels))
         self.crf = ConditionalRandomField(num_tags=self.label_num, allowed_transitions=None)
         self.crf.trans_m.data *= 0
 
@@ -456,10 +443,6 @@ class TransformerOnlyClassifier(nn.Module):
                     torch.tensor(pos / (10000**((2 * i) / embedding_size))))
                 self.position_encoding[pos, i + 1] = torch.cos(
                     torch.tensor(pos / (10000**((2 * (i + 1)) / embedding_size))))
-        # self.register_buffer(
-        #     'position_encoding', 
-        #     get_positional_encoding(seq_len, embedding_size)
-        # )
         
         self.norm = nn.LayerNorm(embedding_size)
         
@@ -471,8 +454,6 @@ class TransformerOnlyClassifier(nn.Module):
             nn.ReLU(),
             nn.Linear(embedding_size // 2, self.label_num)
         )
-        # self.crf = ConditionalRandomField(num_tags=self.label_num,
-        #                                   allowed_transitions=allowed_transitions(id2labels))
         self.crf = ConditionalRandomField(num_tags=self.label_num, allowed_transitions=None)
         self.crf.trans_m.data *= 0
     

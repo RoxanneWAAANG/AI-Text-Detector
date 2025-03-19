@@ -27,10 +27,8 @@ class DataManager:
         self.batch_size = batch_size
         self.max_len = max_len
         self.human_label = human_label
-        # id2label: Mapping from IDs to labels.id2label.
         self.id2label = id2label
         self.label2id = {v: k for k, v in id2label.items()}
-        # word_pad_idx, label_pad_idx: Padding indices for words and labels.
         self.word_pad_idx = word_pad_idx
         self.label_pad_idx = label_pad_idx
 
@@ -38,7 +36,6 @@ class DataManager:
 
         if train_path:
             # Process the training dataset and convert to Hugging Face Dataset format.
-            # {'features': [], 'prompt_len': [], 'label_int': [], 'text': []}
             train_dict = self.initialize_dataset(train_path)
             data["train"] = Dataset.from_dict(train_dict)
         
@@ -54,16 +51,6 @@ class DataManager:
             self.train_dataloader = self.get_train_dataloader(datasets["train"])
         if test_path:
             self.test_dataloader = self.get_eval_dataloader(datasets["test"])
-        
-        ##############################
-        # Check for overlap between train and test data
-        train_texts = set([sample['text'] for sample in self.train_dataloader.dataset])
-        test_texts = set([sample['text'] for sample in self.test_dataloader.dataset])
-
-        overlap = train_texts.intersection(test_texts)
-        print('total train samples:', len(train_texts))
-        print(f"Overlap between train and test: {len(overlap)} samples")        
-        ##############################
         
     def initialize_dataset(self, data_path, save_dir=''):
         # Generate a filename for saving processed data (currently unused).
@@ -82,7 +69,6 @@ class DataManager:
             'features': [],
             'prompt_len': [],
             'label': [],
-            # 'label_int': [],
             'text': []
         }
 
@@ -127,7 +113,6 @@ class DataManager:
             samples_dict['features'].append(ll_tokens_list)
             samples_dict['prompt_len'].append(prompt_len)
             samples_dict['label'].append(label)
-            # samples_dict['label_int'].append(label_int)
             samples_dict['text'].append(text)
 
         return samples_dict
@@ -155,7 +140,6 @@ class DataManager:
 
         # Pad features and create masks.
         features, masks = self.process_and_convert_to_tensor(features)
-        # pad_masks = ~masks * -1
         pad_masks = (1 - masks) * self.label_pad_idx
 
         # Align and pad labels for each sequence.
@@ -198,24 +182,6 @@ class DataManager:
         if seq_len <= 0:
             return None
         return torch.tensor([self.label2id[label]] * seq_len, dtype=torch.long)
-        # prefix = ['B-', 'M-', 'E-', 'S-']
-        # if seq_len <= 0:
-        #     return None
-        # # Special case for single-token sequences.
-        # elif seq_len == 1:
-        #     # Assign the 'S-' prefix.
-        #     label = 'S-' + label
-        #     return torch.tensor([self.label2id[label]], dtype=torch.long)
-        # # For sequences with more than one token:
-        # else:
-        #     ids = []
-        #     # Add the 'B-' label for the start of the sequence.
-        #     ids.append(self.label2id['B-'+label])
-        #     # Add 'M-' labels for the middle tokens.
-        #     ids.extend([self.label2id['M-'+label]] * (seq_len - 2))
-        #     # Add the 'E-' label for the end of the sequence.
-        #     ids.append(self.label2id['E-'+label])
-        #     return torch.tensor(ids, dtype=torch.long)
 
     def process_and_convert_to_tensor(self, data):
         """ here, data is features. """
@@ -224,13 +190,12 @@ class DataManager:
         # data shape: [B, S, E]
         feat_dim = len(data[0][0])
         # Pad sequences to `max_len` by appending zero vectors.
-        padded_data = [  # [[0] * feat_dim] + 
+        padded_data = [
             seq + [[0] * feat_dim] * (max_len - len(seq)) for seq in data
         ]
         # Truncate sequences to `max_len` if they exceed it.
         padded_data = [seq[:max_len] for seq in padded_data]
-
-        # masks = [[False] * min(len(seq)+1, max_len) + [True] * (max_len - min(len(seq)+1, max_len)) for seq in data]
+        # Create masks indicating the presence of data.
         masks = [[1] * min(len(seq), max_len) + [0] *
                 (max_len - min(len(seq), max_len)) for seq in data]
 

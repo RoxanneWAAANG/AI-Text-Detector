@@ -8,7 +8,7 @@ output_file = "/Users/ruoxinwang/Desktop/Duke/Deep_Learning_and_Applications/Nat
 with open(input_file, 'r', encoding='utf-8') as infile, open(output_file, 'w', encoding='utf-8') as outfile:
     # Read and write the first 10 lines
     for i, line in enumerate(infile):
-        if i >= 100:  # Stop after reading 10 lines
+        if i >= 100:
             break
         
         # Verify it's valid JSON before writing
