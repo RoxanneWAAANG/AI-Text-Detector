@@ -142,7 +142,7 @@ def get_features(type, input_file, output_file):
                 'losses': losses,
                 'begin_idx_list': begin_idx_list,
                 'll_tokens_list': ll_tokens_list,
-                'prompt_len': prompt_len
+                'prompt_len': prompt_len,
                 'label_int': label_int,
                 'label': label,
                 'text': line
@@ -174,6 +174,7 @@ def get_features_unlabeled(input_file, output_file):
     with open(output_file, 'w', encoding='utf-8') as f:
         for data in tqdm(lines):
             line = data['text']
+            prompt_len = data['prompt_len']
 
             # Initialize storage variables
             losses = []
@@ -197,6 +198,7 @@ def get_features_unlabeled(input_file, output_file):
                 'losses': losses,
                 'begin_idx_list': begin_idx_list,
                 'll_tokens_list': ll_tokens_list,
+                'prompt_len': prompt_len,
                 'text': line  # Retain the original text for reference
             }
 
@@ -235,6 +237,7 @@ def process_features(input_file, output_file, do_normalize=False):
             losses = raw_feature['losses']
             begin_idx_list = raw_feature['begin_idx_list']
             ll_tokens_list = raw_feature['ll_tokens_list']
+            prompt_len = raw_feature['prompt_len']
             label_int = raw_feature['label_int']
             label = raw_feature['label']
             text = raw_feature['text']
