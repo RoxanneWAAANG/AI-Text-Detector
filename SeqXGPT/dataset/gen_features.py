@@ -108,6 +108,7 @@ def get_features(type, input_file, output_file):
         for data in tqdm(lines):
             line = data['text']
             label = data['label']
+            prompt_len = data['prompt_len']
 
             losses = []
             begin_idx_list = []
@@ -141,6 +142,7 @@ def get_features(type, input_file, output_file):
                 'losses': losses,
                 'begin_idx_list': begin_idx_list,
                 'll_tokens_list': ll_tokens_list,
+                'prompt_len': prompt_len
                 'label_int': label_int,
                 'label': label,
                 'text': line
