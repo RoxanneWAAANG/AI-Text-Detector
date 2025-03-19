@@ -108,7 +108,7 @@ def get_features(type, input_file, output_file):
         for data in tqdm(lines):
             line = data['text']
             label = data['label']
-            prompt_len = data['prompt_len']
+            prompt_len = data.get('prompt_len', 0)
 
             losses = []
             begin_idx_list = []
@@ -174,7 +174,7 @@ def get_features_unlabeled(input_file, output_file):
     with open(output_file, 'w', encoding='utf-8') as f:
         for data in tqdm(lines):
             line = data['text']
-            prompt_len = data['prompt_len']
+            prompt_len = data.get('prompt_len', 0)
 
             # Initialize storage variables
             losses = []
