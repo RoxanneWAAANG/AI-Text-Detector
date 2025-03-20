@@ -165,13 +165,13 @@ To better understand the contributions of our proposed modifications, we compare
 
 ### Bi-Classification
 
-For the bi-classification task, the performance results (measured in accuracy) on the AI-generated text from GPT2, GPT3-re, and LLaMA are summarized in the table below:
+For the bi-classification task, the performance results **(measured in accuracy)** on the AI-generated text from GPT2, GPT3-re, and LLaMA are summarized in the table below:
 
 |         | SeqXGPT | SeqXGPT (PA) | SeqXGPT (Conv) | SeqXGPT (ps) |
 |---------|---------|--------------|----------------|--------------|
-| **gpt2**    | 91.2%   | 92.3%        | 93.1%          | 92.8%        |
-| **gpt3re**  | 90.5%   | 91.7%        | 92.5%          | 91.9%        |
-| **llama**   | 89.8%   | 90.9%        | 91.6%          | 91.2%        |
+| **gpt2**    | 0.65   | 0.72        | 0.72          | 0.70        |
+| **gpt3re**  | 0.63   | 0.69        | 0.72          | 0.71        |
+| **llama**   | 0.65   | 0.70        | 0.73          | 0.71        |
 
 
 ### Multi-Classification
@@ -180,9 +180,10 @@ For the multi-classification task, the performance results (measured in accuracy
 
 |         | SeqXGPT | SeqXGPT (PA) | SeqXGPT (Conv) | SeqXGPT (ps) |
 |---------|---------|--------------|----------------|--------------|
-| **gpt2**    | 91.2%   | 92.3%        | 93.1%          | 92.8%        |
-| **gpt3re**  | 90.5%   | 91.7%        | 92.5%          | 91.9%        |
-| **llama**   | 89.8%   | 90.9%        | 91.6%          | 91.2%        |
+| **gpt2**    | 0.43   | 0.49        | 0.50          | 0.46        |
+| **gpt3re**  | 0.43   | 0.52        | 0.52          | 0.45        |
+| **llama**   | 0.44   | 0.52        | 0.51          | 0.49        |
+| **human**   | 0.62   | 0.54        | 0.50          | 0.49        |
 
 *Note: The above numbers are representative values. In our actual experiments, both bi-classification and multi-classification tasks exhibited similar trends. Notably, the SeqXGPT (Conv) variant consistently achieved the highest performance across all AI sources, demonstrating the benefits of incorporating 2D convolution for capturing local patterns. The patch-based and patch-shuffling operations also contributed to reducing overfitting and enhancing the model’s generalization.*
 
@@ -197,8 +198,8 @@ cd SeqXGPT
 
 ```bash
 # create a new virtual environment, conda in this case
-conda create -n seqx python=3.11
-conda activate seqx
+conda create -n ai-detect python=3.11
+conda activate ai-detect
 ```
 ```bash
 pip install -r requirements.txt
