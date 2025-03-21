@@ -3,7 +3,7 @@
 ### Demo Website: https://huggingface.co/spaces/Timxjl/seqxgpt_demo
 ### Slides: https://docs.google.com/presentation/d/1OMJSmQSXElmc571ldWF_6uBhB_p431oj2tTb4TOt7V0/edit?usp=sharing
 ### Dataset: https://huggingface.co/datasets/Roxanne-WANG/AI-Text_Detection
-### Deep Learning Model Checkpoint: https://huggingface.co/Roxanne-WANG/AI-Text-Detection
+### DL Model Checkpoint: https://huggingface.co/Roxanne-WANG/AI-Text-Detection
 
 ## I. Introduction
 
