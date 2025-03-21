@@ -2,7 +2,7 @@
 ## Naive Approach - Mean Loss
 
 ### Method
-Step 1: Calculates the mean loss for each label in training data
+Step 1: Calculate the mean loss for each label in training data
 
 Step 2: Predict the label whose mean loss is closest to the test example's loss for each test example 
 
