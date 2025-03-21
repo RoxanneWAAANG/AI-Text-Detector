@@ -1,4 +1,7 @@
-# Non Deep Learning Method
+# Non Deep Learning Method: Random Forest
+
+![maxresdefault](https://github.com/user-attachments/assets/6456882c-bd0e-49ea-b99a-d9e208e4e8b1)
+* image from Kaggle *
 
 # Steps
 
