@@ -1,4 +1,4 @@
-# AI-Text-Detector
+# AI-Generated Text Detector
 
 ### Demo Website: 
 ### Slides: https://docs.google.com/presentation/d/1OMJSmQSXElmc571ldWF_6uBhB_p431oj2tTb4TOt7V0/edit?usp=sharing
