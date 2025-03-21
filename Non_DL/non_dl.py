@@ -12,16 +12,16 @@ import pickle
 
 #Loading all the data and combining it into a single dataframe
 #GPT2
-file_path_gpt2 = 'AI-Text_Detection/en_gpt2_lines_raw.jsonl'
+file_path_gpt2 = 'data/en_gpt2_lines_raw.jsonl'
 df_gpt2 = pd.read_json(file_path_gpt2, lines=True)
 #GPT3
-file_path_gpt3 = 'AI-Text_Detection/en_gpt3_lines_raw.jsonl'
+file_path_gpt3 = 'data/en_gpt3_lines_raw.jsonl'
 df_gpt3 = pd.read_json(file_path_gpt3, lines=True)
 #Human
-file_path_human = 'AI-Text_Detection/en_human_lines_raw.jsonl'
+file_path_human = 'data/en_human_lines_raw.jsonl'
 df_human = pd.read_json(file_path_human, lines=True)
 #llama
-file_path_llama = 'AI-Text_Detection/en_llama_lines_raw.jsonl'
+file_path_llama = 'data/en_llama_lines_raw.jsonl'
 df_llama = pd.read_json(file_path_llama, lines=True)
 
 #Combining all the dataframes
