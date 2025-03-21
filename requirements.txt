@@ -9,3 +9,11 @@ nltk
 tqdm
 mosec
 msgpack
+streamlit
+joblib
+python-dateutil
+pytz
+scipy
+six
+threadpoolctl
+tzdata

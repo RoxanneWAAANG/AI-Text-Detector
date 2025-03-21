@@ -290,7 +290,12 @@ python SeqXGPT/train.py --split_dataset --data_path dataset/SeqXGPT_output --tra
 ```
 
 ## VI. Application Deployment
-
+Directory `/app` contains all the code for our Streamlit web app. To run the app locally, follow these steps:
+```bash
+cd app
+streamlit run app.py
+```
+The app is now hosted on Huggingface Streamlit space [here](https://huggingface.co/spaces/Timxjl/seqxgpt_demo).
 
 ## VII. Ethical Statement
 
@@ -302,6 +307,52 @@ Key ethical principles include:
 - **Transparency and Oversight**: Automated detection results should be corroborated with human oversight due to the inherent limitations and potential biases in any algorithmic system.
 - **Privacy and Legal Compliance**: Users must ensure that the deployment of this technology adheres to all relevant privacy laws and ethical guidelines, safeguarding personal data and consent.
 - **Non-Discrimination**: While our model strives for fairness, we remain committed to continually assessing and mitigating any biases present in the detection process.
+
+## Repository structure
+
+```
+.
+├── Deep_Learning_Model                # Main deep learning implementation directory
+│   ├── SeqXGPT                        # Core SeqXGPT model implementation
+│   │   ├── Training_Process.txt       # Training process documentation
+│   │   ├── dataloader.py              # Data loading utilities
+│   │   ├── model.py                   # Model architecture definition
+│   │   └── train.py                   # Training script
+│   ├── backend_api.py                 # API endpoints for feature extraction
+│   ├── backend_model.py               
+│   ├── backend_model_info.py          
+│   ├── backend_t5.py                  
+│   ├── backend_utils.py               
+│   ├── dataset                        # Dataset handling
+│   │   ├── gen_features.py            # Feature generation script
+│   │   └── sample_data                # Sample dataset directory
+│   │       ├── inference.jsonl        # Inference data samples
+│   │       ├── sample.jsonl           # Training data samples
+│   │       └── sample_raw.jsonl       # Raw data samples
+│   └── utils                          # Utility scripts
+│       ├── api_test.py                # API testing utilities
+│       ├── extract_json.py            # JSON data extraction
+│       └── nltk_download.py           # NLTK resources downloader
+├── Naive_Model                        # Basic model implementation
+│   ├── dataset/                       # Dataset for naive model
+│   └── naive_approach.py              # Naive model implementation
+├── Non_DL                             # Non-deep learning approaches
+│   ├── clf.pkl                        # Trained classifier pickle
+│   ├── count_vect.pkl                 # Count vectorizer pickle
+│   ├── data/                          # Data directory for non-DL models
+│   ├── non_dl.py                      # Non-DL model implementation
+│   └── tfidf_transformer.pkl          # TF-IDF transformer pickle
+└── app                                # Web application directory
+    ├── SeqXGPT                        
+    │   ├── ...                        # SeqXGPT files
+    │   ├── sample_data                # Sample data for app
+    │   │   ├── inference_sample.jsonl # Inference samples
+    │   │   └── inference_sample_raw.jsonl # Raw inference samples
+    │   ├── generate_features.py       # Feature generation for app
+    │   ├── transform.py               # Data transformation utilities
+    │   └── transformer_cls.pt         # Trained transformer model
+    └── app.py                         # Main application file
+```
 
 ## License
 
