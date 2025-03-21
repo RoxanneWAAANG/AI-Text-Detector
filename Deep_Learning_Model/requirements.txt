@@ -1,0 +1,11 @@
+torch
+transformers
+numpy
+pandas
+scikit-learn
+datasets
+fastNLP
+nltk
+tqdm
+mosec
+msgpack
