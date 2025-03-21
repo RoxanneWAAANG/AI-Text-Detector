@@ -358,4 +358,5 @@ Key ethical principles include:
 
 This repository is released under the Apache License 2.0, following the same licensing as the original SeqXGPT project.
 
-
+--- 
+_Some Sections of the README are re-articulated using ChatGPT._
