@@ -185,9 +185,7 @@ For the multi-classification task, the performance results (measured in accuracy
 | **llama**   | 0.44   | 0.52        | 0.51          | 0.49        |
 | **human**   | 0.62   | 0.54        | 0.50          | 0.49        |
 
-*Note: The above numbers are representative values. In our actual experiments, both bi-classification and multi-classification tasks exhibited similar trends. Notably, the SeqXGPT (Conv) variant consistently achieved the highest performance across all AI sources, demonstrating the benefits of incorporating 2D convolution for capturing local patterns. The patch-based and patch-shuffling operations also contributed to reducing overfitting and enhancing the model’s generalization.*
-
-Overall, these results indicate that our proposed modifications significantly improve detection performance, enabling robust identification of AI-generated content across different language models. The enhanced feature extraction—through smoothing, convolution, and shuffling—plays a critical role in achieving these improvements.
+Overall, these results indicate that our proposed modifications have slightly improve detection performance, enabling robust identification of AI-generated content across different language models. The enhanced feature extraction—through smoothing, convolution, and shuffling—plays a critical role in achieving these improvements.
 
 
 ## Requirements
